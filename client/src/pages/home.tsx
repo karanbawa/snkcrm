@@ -4,6 +4,7 @@ import CustomerTable from '@/components/customer-table';
 import CustomerSearchFilters from '@/components/customer-search-filters';
 import AddCustomerModal from '@/components/add-customer-modal';
 import ExportToExcel from '@/components/export-to-excel';
+import ImportCustomers from '@/components/import-customers';
 import FollowUpCalendar from '@/components/follow-up-calendar';
 import ActivityFeed from '@/components/activity-feed';
 import QuickAddLead from '@/components/quick-add-lead';
@@ -28,6 +29,7 @@ export default function Home() {
             <p className="mt-1 text-sm text-gray-500">Manage all your customers, leads, and interactions</p>
           </div>
           <div className="mt-4 md:mt-0 flex space-x-3">
+            <ImportCustomers />
             <ExportToExcel />
             <button 
               onClick={() => setIsAddModalOpen(true)}

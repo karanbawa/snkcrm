@@ -13,7 +13,7 @@ export default function FollowUpCalendar() {
   const { customers, isLoading } = useCustomers();
   
   useEffect(() => {
-    if (!customers) return;
+    if (!customers || !customers.length) return;
     
     // Group customers by follow-up date
     const groupedFollowUps: {[key: string]: Customer[]} = {};
@@ -174,11 +174,13 @@ export default function FollowUpCalendar() {
               day_selected: 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
             }}
             components={{
-              DayContent: ({ date, ...props }) => {
+              DayContent: (props) => {
+                const { date } = props;
                 const followUpClass = getFollowUpClass(date);
+                
                 return (
                   <div className={followUpClass}>
-                    <div {...props} className="day-highlighted">
+                    <div className="day-highlighted">
                       {date.getDate()}
                     </div>
                   </div>

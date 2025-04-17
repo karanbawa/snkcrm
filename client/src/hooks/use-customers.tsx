@@ -195,6 +195,52 @@ export function useCustomers() {
       console.error(error);
     }
   });
+  
+  // Toggle hot lead
+  const toggleHotLeadMutation = useMutation({
+    mutationFn: (customerId: string) => {
+      return api.toggleHotLead(customerId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/activity-logs'],
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to toggle hot lead status',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
+  });
+  
+  // Toggle pinned status
+  const togglePinnedMutation = useMutation({
+    mutationFn: (customerId: string) => {
+      return api.togglePinned(customerId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/activity-logs'],
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to toggle pinned status',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
+  });
 
   // Hook for fetching notes for a specific customer
   const useCustomerNotes = (customerId: string) => {

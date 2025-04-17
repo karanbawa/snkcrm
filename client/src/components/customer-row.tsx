@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import useCustomerStore from '@/hooks/use-customer-store';
+import { useCustomers } from '@/hooks/use-customers';
 import { Customer } from '@/types/customer';
 import StatusBadge from '@/components/status-badge';
 import PriorityBadge from '@/components/priority-badge';
+import ReturningCustomerBadge from '@/components/returning-customer-badge';
 import ExpandedCustomerData from '@/components/expanded-customer-data';
 import { useToast } from '@/hooks/use-toast';
 import {

@@ -5,8 +5,12 @@ import { z } from "zod";
 import { 
   insertCustomerSchema, 
   insertNoteSchema,
+  insertEmailLogSchema,
+  insertActivityLogSchema,
   Customer,
-  Note 
+  Note,
+  EmailLog,
+  ActivityLog
 } from "@shared/schema";
 import { log } from "./vite";
 import { v4 as uuidv4 } from "uuid";

@@ -16,11 +16,38 @@ export async function fetchCustomer(id: string): Promise<Customer> {
   });
 }
 
-export async function createCustomer(customer: any): Promise<Customer> {
+export async function createCustomer(customer: Partial<Customer>): Promise<Customer> {
+  // Ensure required fields are present
+  const customerWithDefaults = {
+    ...customer,
+    name: customer.name || 'Unknown',
+    contactPerson: customer.contactPerson || 'No Contact',
+    email: customer.email || 'no-email@example.com',
+    phone: customer.phone || '',
+    country: customer.country || 'Unknown',
+    region: customer.region || '',
+    city: customer.city || 'Unknown',
+    website: customer.website || '',
+    customerType: customer.customerType || 'Other',
+    requirements: customer.requirements || '',
+    status: customer.status || 'Lead',
+    priority: customer.priority || 'Medium',
+    tags: customer.tags || [],
+    isReturningCustomer: customer.isReturningCustomer || false,
+    valueTier: customer.valueTier || 'Standard',
+    directImport: customer.directImport || 'No',
+    lastFollowUpDate: customer.lastFollowUpDate || '',
+    nextFollowUpDate: customer.nextFollowUpDate || '',
+    lastContactNotes: customer.lastContactNotes || '',
+    keyMeetingPoints: customer.keyMeetingPoints || '',
+    isHotLead: customer.isHotLead || false,
+    isPinned: customer.isPinned || false,
+  };
+  
   return await apiRequest<Customer>({ 
     url: '/api/customers',
     method: 'POST',
-    data: customer
+    data: customerWithDefaults
   });
 }
 

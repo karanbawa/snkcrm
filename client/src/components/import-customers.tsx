@@ -123,15 +123,16 @@ export default function ImportCustomers() {
             try {
               // Map the imported data to our customer schema
               const rowData = row as Record<string, any>;
+              // Ensure all required fields have default values
               const customer: Partial<Customer> = {
                 id: uuidv4(),
-                name: rowData.name || rowData.Name || rowData.company || rowData.Company || '',
-                contactPerson: rowData.contactPerson || rowData.contact || rowData.contact_person || rowData.Contact || '',
-                email: rowData.email || rowData.Email || '',
+                name: rowData.name || rowData.Name || rowData.company || rowData.Company || 'Unknown Company',
+                contactPerson: rowData.contactPerson || rowData.contact || rowData.contact_person || rowData.Contact || 'No Contact',
+                email: rowData.email || rowData.Email || 'no-email@example.com',
                 phone: rowData.phone || rowData.Phone || '',
-                country: rowData.country || rowData.Country || '',
+                country: rowData.country || rowData.Country || 'Unknown',
                 region: rowData.region || rowData.Region || '',
-                city: rowData.city || rowData.City || '',
+                city: rowData.city || rowData.City || 'Unknown',
                 website: rowData.website || rowData.Website || '',
                 customerType: mapCustomerType(rowData.customerType || rowData.customer_type || rowData.type || ''),
                 requirements: rowData.requirements || rowData.Requirements || '',
@@ -147,6 +148,9 @@ export default function ImportCustomers() {
                 keyMeetingPoints: rowData.keyMeetingPoints || rowData.key_meeting_points || '',
                 isHotLead: Boolean(rowData.isHotLead || rowData.hot_lead || false),
                 isPinned: Boolean(rowData.isPinned || rowData.pinned || false),
+                // These are required fields in the database schema
+                createdAt: new Date(),
+                updatedAt: new Date(),
               };
               
               // Add the customer

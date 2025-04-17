@@ -1,0 +1,70 @@
+🔹 Part 1: Core UI + Customer Database Table (React + Tailwind CSS)
+Prompt:
+Build the frontend of a CRM web app for a tile and stone export company, SNK Surfaces, using React and Tailwind CSS. All functionality should be handled locally with React state or mocked APIs (no Firebase or backend).
+
+🗂 Customer Database Table
+Create a clean, modern interface to add, edit, and delete customers with the following fields:
+
+Returning Customer (Yes/No toggle)
+
+Customer Name, Country, Region, City
+
+Contact Person, Email, Phone, Website
+
+Customer Type (Retailer, Distributor, etc.)
+
+Requirement (textarea), Status (Lead, Email Sent, etc.)
+
+Priority (High, Medium, Low – use color tags)
+
+Tags (multi-tag input)
+
+Value Tier, Direct Import (Yes/No/Distributor)
+
+Last Follow-up Date, Next Follow-up Date
+
+Last Contact Notes, Key Meeting Points
+
+✅ Fully responsive design
+✅ Use clean layout, consistent spacing, typography, and intuitive UX
+✅ All data saved in browser (or in memory)
+
+🔹 Part 2: Notes System per Customer (with Image Upload UI)
+Prompt:
+Extend the CRM app with a Notes Log feature for each customer.
+Store notes in component state (no backend or Firebase).
+
+📝 For each customer:
+Add multiple notes in a timeline view
+
+Fields: Note text, auto timestamp, “Next Step” field
+
+Allow marking a note as “Key” (visually highlighted)
+
+Optional: UI for uploading multiple images (images stored locally for now; no actual upload)
+
+🎨 Notes should be collapsible and expandable per customer
+✅ Keep the UX clean, mobile-friendly, and interactive
+
+🔹 Part 3: Filters, Search, and Polish Features
+Prompt:
+Add search, filters, and extra features to complete the CRM web app.
+
+🔍 Filters & Search
+Filter customers by: Country, Status, Priority, Customer Type
+
+Search by: Name, Tags, Requirement (fuzzy search preferred)
+
+📦 Extra Features
+Export customer data to Excel (client-side)
+
+“Returning Customer” badge (visually styled)
+
+Color-coded priority indicator (High = red, Medium = yellow, Low = green)
+
+Light animations and icons (e.g., for buttons, tooltips)
+
+Responsive layout for all screen sizes
+
+✅ Stick to a consistent, minimal design (white background, blue/gray accents)
+✅ Keep code modular and scalable for future integration

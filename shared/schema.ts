@@ -76,6 +76,10 @@ export const customers = pgTable("customers", {
   lastContactNotes: text("last_contact_notes").notNull(),
   keyMeetingPoints: text("key_meeting_points").notNull(),
   
+  // Enhancement flags
+  isHotLead: boolean("is_hot_lead").notNull().default(false),
+  isPinned: boolean("is_pinned").notNull().default(false),
+  
   // Timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -92,9 +96,29 @@ export const notes = pgTable("notes", {
   images: text("images").array().notNull(),
 });
 
+// Email logs table
+export const emailLogs = pgTable("email_logs", {
+  id: text("id").notNull().primaryKey(),
+  customerId: text("customer_id").notNull().references(() => customers.id, { onDelete: 'cascade' }),
+  subject: text("subject").notNull(),
+  summary: text("summary").notNull(),
+  date: timestamp("date").defaultNow().notNull(),
+});
+
+// Activity log table for global timeline
+export const activityLogs = pgTable("activity_logs", {
+  id: text("id").notNull().primaryKey(),
+  customerId: text("customer_id").notNull().references(() => customers.id, { onDelete: 'cascade' }),
+  action: text("action").notNull(), // e.g., "Note Added", "Status Updated", "Email Sent"
+  description: text("description").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Setup relations
 export const customersRelations = relations(customers, ({ many }) => ({
   notes: many(notes),
+  emailLogs: many(emailLogs),
+  activityLogs: many(activityLogs),
 }));
 
 export const notesRelations = relations(notes, ({ one }) => ({
@@ -104,12 +128,32 @@ export const notesRelations = relations(notes, ({ one }) => ({
   }),
 }));
 
+export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
+  customer: one(customers, {
+    fields: [emailLogs.customerId],
+    references: [customers.id],
+  }),
+}));
+
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  customer: one(customers, {
+    fields: [activityLogs.customerId],
+    references: [customers.id],
+  }),
+}));
+
 // Insert schemas for validation
 export const insertCustomerSchema = createInsertSchema(customers);
 export const insertNoteSchema = createInsertSchema(notes);
+export const insertEmailLogSchema = createInsertSchema(emailLogs);
+export const insertActivityLogSchema = createInsertSchema(activityLogs);
 
 // Types
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = typeof customers.$inferInsert;
 export type Note = typeof notes.$inferSelect;
 export type InsertNote = typeof notes.$inferInsert;
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailLog = typeof emailLogs.$inferInsert;
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = typeof activityLogs.$inferInsert;

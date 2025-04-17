@@ -72,6 +72,9 @@ export default function AddFollowupModal({ isOpen, onClose }: AddFollowupModalPr
       ...customer,
       nextFollowUpDate: followUpDate,
       lastContactNotes: notes ? `${notes}\n${customer.lastContactNotes || ''}` : customer.lastContactNotes,
+      // Explicitly preserve these flags to ensure they're not lost
+      isHotLead: customer.isHotLead,
+      isPinned: customer.isPinned,
     };
     
     updateCustomer(customerId, updatedCustomer);

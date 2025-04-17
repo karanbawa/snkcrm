@@ -117,10 +117,8 @@ export default function Dashboard() {
               <p className="text-sm text-gray-500">{stat.description}</p>
             </CardContent>
             <CardFooter className="pt-0">
-              <Link href={stat.link}>
-                <a className="text-sm font-medium text-primary hover:underline">
-                  View all
-                </a>
+              <Link href={stat.link} className="text-sm font-medium text-primary hover:underline">
+                View all
               </Link>
             </CardFooter>
           </Card>
@@ -148,16 +146,18 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {quickActions.map((action) => (
-              <Link key={action.title} href={action.action}>
-                <a className="flex items-center gap-3 rounded-md border border-gray-200 bg-white p-3 transition-colors hover:bg-gray-50">
-                  <div className="rounded-full bg-primary/10 p-1.5 text-primary">
-                    {action.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{action.title}</h3>
-                    <p className="text-xs text-gray-500">{action.description}</p>
-                  </div>
-                </a>
+              <Link 
+                key={action.title} 
+                href={action.action} 
+                className="flex items-center gap-3 rounded-md border border-gray-200 bg-white p-3 transition-colors hover:bg-gray-50"
+              >
+                <div className="rounded-full bg-primary/10 p-1.5 text-primary">
+                  {action.icon}
+                </div>
+                <div>
+                  <h3 className="font-medium">{action.title}</h3>
+                  <p className="text-xs text-gray-500">{action.description}</p>
+                </div>
               </Link>
             ))}
           </CardContent>

@@ -19,13 +19,14 @@ import {
   PlusIcon,
   RocketIcon,
   MagnifyingGlassIcon,
-  InfoCircledIcon,
-  CheckCircledIcon
+  FileIcon,
+  CheckIcon
 } from '@radix-ui/react-icons';
 import ActivityFeed from '@/components/activity-feed';
 import { useToast } from '@/hooks/use-toast';
 import AddCustomerModal from '@/components/add-customer-modal';
 import AddFollowupModal from '@/components/add-followup-modal';
+import ImportCustomers from '@/components/import-customers';
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const { customers, isLoading } = useCustomers();
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [isAddFollowupOpen, setIsAddFollowupOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   
   const customerCount = customers.length;
   const hotLeads = customers.filter(c => c.isHotLead).length;
@@ -87,6 +89,12 @@ export default function Dashboard() {
       onClick: () => setIsAddCustomerOpen(true)
     },
     {
+      title: 'Import Data',
+      description: 'Import customers from CSV/Excel',
+      icon: <FileIcon className="h-5 w-5" />,
+      onClick: () => document.getElementById('import-data-trigger')?.click()
+    },
+    {
       title: 'Schedule Follow-up',
       description: 'Set a reminder for follow-up',
       icon: <CalendarIcon className="h-5 w-5" />,
@@ -97,13 +105,7 @@ export default function Dashboard() {
       description: 'Add a note to an existing customer',
       icon: <ChatBubbleIcon className="h-5 w-5" />,
       onClick: () => navigate('/customers')
-    },
-    {
-      title: 'Export Data',
-      description: 'Export your customer data',
-      icon: <CheckCircledIcon className="h-5 w-5" />,
-      onClick: () => navigate('/customers')
-    },
+    }
   ];
 
   return (
@@ -143,6 +145,33 @@ export default function Dashboard() {
               </CardFooter>
             </Card>
           ))}
+        </div>
+        
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-xl font-semibold">Quick Actions</h2>
+          <div className="flex space-x-2">
+            <Button 
+              onClick={() => setIsAddCustomerOpen(true)}
+              className="gap-1 shadow-sm"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Add Customer
+            </Button>
+            
+            <div className="hidden">
+              <ImportCustomers />
+            </div>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => document.getElementById('import-data-trigger')?.click()}
+              id="visible-import-button"
+            >
+              <FileIcon className="h-4 w-4" />
+              <span>Import Data</span>
+            </Button>
+          </div>
         </div>
         
         {/* Two Column Layout */}

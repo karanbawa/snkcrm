@@ -258,6 +258,7 @@ export default function ImportCustomers() {
           variant="outline" 
           className="flex items-center gap-2"
           onClick={() => resetState()}
+          id="import-data-trigger"
         >
           <FileSpreadsheet className="h-4 w-4" />
           <span>Import Data</span>

@@ -22,7 +22,7 @@ export default function CustomersPage() {
           <ExportToExcel />
           <Button 
             onClick={() => setIsAddModalOpen(true)}
-            className="gap-1"
+            className="gap-1 shadow-sm"
           >
             <PlusIcon className="h-4 w-4" />
             Add Customer

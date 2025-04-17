@@ -223,7 +223,7 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
                   <SelectValue placeholder="Select a country" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select a country</SelectItem>
+                  <SelectItem value="_none">Select a country</SelectItem>
                   <SelectItem value="United States">United States</SelectItem>
                   <SelectItem value="Canada">Canada</SelectItem>
                   <SelectItem value="United Kingdom">United Kingdom</SelectItem>
@@ -309,7 +309,7 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select type</SelectItem>
+                  <SelectItem value="_none">Select type</SelectItem>
                   <SelectItem value="Retailer">Retailer</SelectItem>
                   <SelectItem value="Distributor">Distributor</SelectItem>
                   <SelectItem value="Contractor">Contractor</SelectItem>
@@ -328,7 +328,7 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select status</SelectItem>
+                  <SelectItem value="_none">Select status</SelectItem>
                   <SelectItem value="Lead">Lead</SelectItem>
                   <SelectItem value="Email Sent">Email Sent</SelectItem>
                   <SelectItem value="Meeting Scheduled">Meeting Scheduled</SelectItem>
@@ -346,7 +346,7 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select priority</SelectItem>
+                  <SelectItem value="_none">Select priority</SelectItem>
                   <SelectItem value="High">High</SelectItem>
                   <SelectItem value="Medium">Medium</SelectItem>
                   <SelectItem value="Low">Low</SelectItem>

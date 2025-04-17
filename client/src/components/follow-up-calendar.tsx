@@ -72,28 +72,9 @@ export default function FollowUpCalendar() {
     );
   };
   
-  // Function to get the color scheme for follow-up dates
-  const getFollowUpClass = (date: Date): string => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
-    
-    const dateStr = date.toISOString().split('T')[0];
-    
-    // If there's no follow-up on this date, return empty string
-    if (!followUps[dateStr]) return '';
-    
-    // If the date is before today, it's overdue
-    if (date < today) return 'follow-up-overdue';
-    
-    // If the date is within next 7 days, it's due soon
-    if (date < nextWeek) return 'follow-up-soon';
-    
-    // Otherwise, it's a future follow-up
-    return 'follow-up-future';
-  };
+  // Function to render customer list for the selected date has been inlined
+  // The getFollowUpClass function has been inlined into the DayContent component
+  // to prevent infinite update loops
   
   // Helper function to get status variant color
   const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -176,10 +157,29 @@ export default function FollowUpCalendar() {
             components={{
               DayContent: (props) => {
                 const { date } = props;
-                const followUpClass = getFollowUpClass(date);
+                // Memoize this calculation to prevent infinite update loops
+                const dateStr = date.toISOString().split('T')[0];
+                const hasFollowUp = followUps[dateStr] ? true : false;
+                
+                let className = '';
+                if (hasFollowUp) {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  
+                  const nextWeek = new Date(today);
+                  nextWeek.setDate(today.getDate() + 7);
+                  
+                  if (date < today) {
+                    className = 'follow-up-overdue';
+                  } else if (date < nextWeek) {
+                    className = 'follow-up-soon';
+                  } else {
+                    className = 'follow-up-future';
+                  }
+                }
                 
                 return (
-                  <div className={followUpClass}>
+                  <div className={className}>
                     <div className="day-highlighted">
                       {date.getDate()}
                     </div>

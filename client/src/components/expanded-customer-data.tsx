@@ -34,9 +34,9 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
   };
   
   return (
-    <div className="p-4 bg-gray-50 border-t border-gray-200">
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-medium">{customer.name}</h3>
+    <div className="p-6 bg-gray-50 border-t border-gray-200">
+      <div className="flex justify-between items-start mb-6">
+        <h3 className="text-xl font-medium text-gray-900">{customer.name}</h3>
         <CustomerActionButtons 
           customer={customer} 
           onToggleHotLead={handleToggleHotLead} 

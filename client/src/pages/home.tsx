@@ -23,10 +23,10 @@ export default function Home() {
             <ExportToExcel />
             <button 
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md flex items-center transition-colors duration-200"
+              className="bg-primary-600 hover:bg-primary-700 text-white font-bold text-lg py-3 px-6 rounded-md flex items-center transition-colors duration-200 shadow-lg"
             >
-              <span className="mr-2">+</span>
-              <span>Add Customer</span>
+              <span className="mr-2 text-xl">+</span>
+              <span>ADD NEW CUSTOMER</span>
             </button>
           </div>
         </div>

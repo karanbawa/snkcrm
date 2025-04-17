@@ -218,7 +218,7 @@ export default function EditCustomerModal({ customer, isOpen, onClose }: EditCus
                   <SelectValue placeholder="Select a country" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select a country</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
                   <SelectItem value="United States">United States</SelectItem>
                   <SelectItem value="Canada">Canada</SelectItem>
                   <SelectItem value="United Kingdom">United Kingdom</SelectItem>
@@ -353,7 +353,7 @@ export default function EditCustomerModal({ customer, isOpen, onClose }: EditCus
                   <SelectValue placeholder="Select tier" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select tier</SelectItem>
+                  <SelectItem value="None">None</SelectItem>
                   <SelectItem value="Premium">Premium</SelectItem>
                   <SelectItem value="Standard">Standard</SelectItem>
                   <SelectItem value="Basic">Basic</SelectItem>
@@ -368,7 +368,7 @@ export default function EditCustomerModal({ customer, isOpen, onClose }: EditCus
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select option</SelectItem>
+                  <SelectItem value="Unknown">Unknown</SelectItem>
                   <SelectItem value="Yes">Yes</SelectItem>
                   <SelectItem value="No">No</SelectItem>
                   <SelectItem value="Distributor">Distributor</SelectItem>

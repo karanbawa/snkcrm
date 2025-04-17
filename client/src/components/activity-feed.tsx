@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ActivityLog } from '@/shared/schema';
+import { ActivityLog } from '@/types/customer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDate } from '@/lib/utils';
 import { 

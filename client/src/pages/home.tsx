@@ -4,9 +4,17 @@ import CustomerTable from '@/components/customer-table';
 import CustomerSearchFilters from '@/components/customer-search-filters';
 import AddCustomerModal from '@/components/add-customer-modal';
 import ExportToExcel from '@/components/export-to-excel';
+import FollowUpCalendar from '@/components/follow-up-calendar';
+import ActivityFeed from '@/components/activity-feed';
+import QuickAddLead from '@/components/quick-add-lead';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Home() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('customers');
+  const isMobile = useIsMobile();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -31,11 +39,38 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Search & Filters */}
-        <CustomerSearchFilters />
-        
-        {/* Customer Table */}
-        <CustomerTable />
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="customers" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 mb-6">
+            <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="calendar">Follow-up Calendar</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="customers" className="space-y-6">
+            {/* Search & Filters */}
+            <CustomerSearchFilters />
+            
+            {/* Customer Table */}
+            <CustomerTable />
+          </TabsContent>
+          
+          <TabsContent value="calendar">
+            <Card>
+              <CardContent className="p-6">
+                <FollowUpCalendar />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="activity">
+            <Card>
+              <CardContent className="p-6">
+                <ActivityFeed />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
       
       {/* Modals */}
@@ -45,6 +80,9 @@ export default function Home() {
           onClose={() => setIsAddModalOpen(false)}
         />
       )}
+      
+      {/* Quick Add Lead Floating Button */}
+      <QuickAddLead />
     </div>
   );
 }

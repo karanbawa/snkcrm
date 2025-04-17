@@ -1,5 +1,3 @@
-export type Priority = "High" | "Medium" | "Low";
-
 export type CustomerStatus = 
   | "Lead" 
   | "Email Sent" 
@@ -17,27 +15,23 @@ export type CustomerType =
   | "Builder" 
   | "Other";
 
+export type Priority = "High" | "Medium" | "Low";
+
 export type ValueTier = "Premium" | "Standard" | "Basic" | "";
 
 export type DirectImport = "Yes" | "No" | "Distributor" | "";
 
 export interface Customer {
   id: string;
-  isReturningCustomer: boolean;
-  
-  // Basic Info
   name: string;
-  country: string;
-  region: string;
-  city: string;
-  
-  // Contact Info
   contactPerson: string;
   email: string;
   phone: string;
+  country: string;
+  region: string;
+  city: string;
   website: string;
-  
-  // Business Details
+  isReturningCustomer: boolean;
   customerType: CustomerType;
   requirements: string;
   status: CustomerStatus;
@@ -45,24 +39,35 @@ export interface Customer {
   tags: string[];
   valueTier: ValueTier;
   directImport: DirectImport;
-  
-  // Dates
   lastFollowUpDate: string;
   nextFollowUpDate: string;
-  
-  // Notes
   lastContactNotes: string;
   keyMeetingPoints: string;
-  
-  // Notes Collection
-  notes: Note[];
+  isHotLead: boolean;
+  isPinned: boolean;
 }
 
 export interface Note {
   id: string;
+  customerId: string;
   text: string;
   timestamp: string;
   nextStep: string;
   isKey: boolean;
-  images: string[]; // Base64 strings for simplicity
+}
+
+export interface EmailLog {
+  id: string;
+  customerId: string;
+  subject: string;
+  summary: string;
+  date: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  customerId: string;
+  action: string;
+  description: string;
+  timestamp: string;
 }

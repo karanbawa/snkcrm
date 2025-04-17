@@ -210,6 +210,29 @@ export function useCustomers() {
     isLoading,
     isError,
     addCustomer: (customer: Omit<Customer, 'id'>) => addCustomerMutation.mutate(customer),
+    createCustomer: (customer: Customer) => {
+      // This is for components that need to create a pre-formed customer with ID
+      return api.createCustomer(customer)
+        .then((createdCustomer) => {
+          queryClient.invalidateQueries({
+            queryKey: ['/api/customers'],
+          });
+          toast({
+            title: 'Success',
+            description: 'Customer added successfully',
+          });
+          return createdCustomer;
+        })
+        .catch((error) => {
+          toast({
+            title: 'Error',
+            description: 'Failed to add customer',
+            variant: 'destructive',
+          });
+          console.error(error);
+          throw error;
+        });
+    },
     deleteCustomer: (id: string) => deleteCustomerMutation.mutate(id),
     updateCustomer: (id: string, customer: Customer) => updateCustomerMutation.mutate({ id, customer }),
     addNote: (customerId: string, note: Omit<Note, 'id' | 'timestamp'>) => addNoteMutation.mutate({ customerId, note }),

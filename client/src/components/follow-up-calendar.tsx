@@ -135,7 +135,7 @@ export default function FollowUpCalendar() {
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .follow-up-overdue .day-highlighted {
           background-color: rgba(239, 68, 68, 0.2) !important;
           color: rgb(239, 68, 68) !important;
@@ -153,7 +153,8 @@ export default function FollowUpCalendar() {
           color: rgb(16, 185, 129) !important;
           font-weight: bold;
         }
-      `}</style>
+      ` }} />
+      
       
       <Card className="col-span-1 md:col-span-3">
         <CardHeader>

@@ -3,6 +3,8 @@ import { Customer, Note } from '@/types/customer';
 import { useCustomers } from '@/hooks/use-customers';
 import NoteItem from './note-item';
 import AddNoteModal from './add-note-modal';
+import CustomerActionButtons from './customer-action-buttons';
+import EmailLogComponent from './email-log';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,8 +23,27 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
   // Filter key notes
   const keyNotes = notes.filter(note => note.isKey);
   
+  const { toggleHotLead, togglePinned } = useCustomers();
+  
+  const handleToggleHotLead = (id: string) => {
+    toggleHotLead(id);
+  };
+  
+  const handleTogglePinned = (id: string) => {
+    togglePinned(id);
+  };
+  
   return (
     <div className="p-4 bg-gray-50 border-t border-gray-200">
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-xl font-medium">{customer.name}</h3>
+        <CustomerActionButtons 
+          customer={customer} 
+          onToggleHotLead={handleToggleHotLead} 
+          onTogglePinned={handleTogglePinned} 
+        />
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <Tabs defaultValue="notes">
@@ -30,6 +51,7 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
               <TabsTrigger value="notes">All Notes ({notes.length})</TabsTrigger>
               <TabsTrigger value="key-notes">Key Notes ({keyNotes.length})</TabsTrigger>
               <TabsTrigger value="details">Customer Details</TabsTrigger>
+              <TabsTrigger value="emails">Email Log</TabsTrigger>
             </TabsList>
             
             <TabsContent value="notes" className="space-y-4">
@@ -226,6 +248,15 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
                     </div>
                   )}
                 </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="emails">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Email Log</h3>
+                </div>
+                <EmailLogComponent customerId={customer.id} />
               </div>
             </TabsContent>
           </Tabs>

@@ -128,7 +128,7 @@ export default function CustomerRow({ customer, isExpanded, onToggleExpand, onEd
       
       {isExpanded && (
         <tr className="expanded-content">
-          <td colSpan={6} className="p-0">
+          <td colSpan={7} className="p-0">
             <ExpandedCustomerData customer={customer} />
           </td>
         </tr>

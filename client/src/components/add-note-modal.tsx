@@ -45,22 +45,24 @@ export default function AddNoteModal({ customerId, isOpen, onClose }: AddNoteMod
       return;
     }
     
-    const newNote: Note = {
-      id: `note-${Date.now()}`,
+    // Create the note without ID and timestamp (server will generate these)
+    const newNote = {
       text: noteText,
-      timestamp: new Date().toISOString(),
-      nextStep,
+      nextStep: nextStep || '',
       isKey,
       images,
     };
     
+    // Add the note to the customer via API
     addNote(customerId, newNote);
     
-    toast({
-      title: "Note Added",
-      description: "Your note has been added successfully.",
-    });
+    // Reset form state
+    setNoteText('');
+    setNextStep('');
+    setIsKey(false);
+    setImages([]);
     
+    // Close the modal
     onClose();
   };
   

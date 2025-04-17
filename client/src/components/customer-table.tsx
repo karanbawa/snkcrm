@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import useCustomerStore from '@/hooks/use-customer-store';
+import { useCustomers } from '@/hooks/use-customers';
 import CustomerRow from '@/components/customer-row';
 import { Customer } from '@/types/customer';
 import EditCustomerModal from '@/components/edit-customer-modal';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CustomerTable() {
-  const { getFilteredCustomers } = useCustomerStore();
+  const { customers, isLoading, isError } = useCustomers();
   const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  
-  const filteredCustomers = getFilteredCustomers();
   
   const toggleExpand = (customerId: string) => {
     setExpandedCustomerId(prev => prev === customerId ? null : customerId);
@@ -22,8 +21,8 @@ export default function CustomerTable() {
   // Calculate pagination values
   const indexOfLastCustomer = currentPage * customersPerPage;
   const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
-  const currentCustomers = filteredCustomers.slice(indexOfFirstCustomer, indexOfLastCustomer);
-  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+  const currentCustomers = customers.slice(indexOfFirstCustomer, indexOfLastCustomer);
+  const totalPages = Math.ceil(customers.length / customersPerPage);
   
   const handleEditCustomer = (customer: Customer) => {
     setEditingCustomer(customer);
@@ -57,14 +56,32 @@ export default function CustomerTable() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentCustomers.length === 0 ? (
+              {isLoading ? (
+                // Loading state
+                Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={index}>
+                    <td colSpan={6} className="px-6 py-4">
+                      <Skeleton className="h-12 w-full" />
+                    </td>
+                  </tr>
+                ))
+              ) : isError ? (
+                // Error state
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-red-500">
+                    Error loading customers. Please try again later.
+                  </td>
+                </tr>
+              ) : currentCustomers.length === 0 ? (
+                // Empty state
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
                     No customers found. Add a new customer to get started.
                   </td>
                 </tr>
               ) : (
-                currentCustomers.map(customer => (
+                // Data loaded state
+                currentCustomers.map((customer: Customer) => (
                   <CustomerRow 
                     key={customer.id}
                     customer={customer}
@@ -79,7 +96,7 @@ export default function CustomerTable() {
         </div>
         
         {/* Pagination */}
-        {filteredCustomers.length > customersPerPage && (
+        {!isLoading && !isError && customers.length > customersPerPage && (
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="flex-1 flex justify-between sm:hidden">
               <button
@@ -102,9 +119,9 @@ export default function CustomerTable() {
                 <p className="text-sm text-gray-700">
                   Showing <span className="font-medium">{indexOfFirstCustomer + 1}</span> to{' '}
                   <span className="font-medium">
-                    {Math.min(indexOfLastCustomer, filteredCustomers.length)}
+                    {Math.min(indexOfLastCustomer, customers.length)}
                   </span>{' '}
-                  of <span className="font-medium">{filteredCustomers.length}</span> results
+                  of <span className="font-medium">{customers.length}</span> results
                 </p>
               </div>
               <div>

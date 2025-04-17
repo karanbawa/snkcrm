@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Note } from '@/types/customer';
-import useCustomerStore from '@/hooks/use-customer-store';
+import { useCustomers } from '@/hooks/use-customers';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -19,7 +19,7 @@ interface NoteItemProps {
 }
 
 export default function NoteItem({ note, customerId }: NoteItemProps) {
-  const { toggleKeyNote, deleteNote } = useCustomerStore();
+  const { toggleKeyNote, deleteNote } = useCustomers();
   const { toast } = useToast();
   const [showImages, setShowImages] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -28,20 +28,12 @@ export default function NoteItem({ note, customerId }: NoteItemProps) {
   
   const handleToggleKey = () => {
     toggleKeyNote(customerId, note.id);
-    toast({
-      title: note.isKey ? 'Key Highlight Removed' : 'Note Marked as Key',
-      description: note.isKey 
-        ? 'The note is no longer highlighted as key.' 
-        : 'The note has been highlighted as a key point.',
-    });
+    // Toast is now handled by the mutation in useCustomers
   };
   
   const handleDelete = () => {
     deleteNote(customerId, note.id);
-    toast({
-      title: 'Note Deleted',
-      description: 'The note has been deleted successfully.',
-    });
+    // Toast is now handled by the mutation in useCustomers
     setShowDeleteDialog(false);
   };
   

@@ -1,118 +1,242 @@
 import { useState } from 'react';
 import { Customer, Note } from '@/types/customer';
-import NoteItem from '@/components/note-item';
-import AddNoteModal from '@/components/add-note-modal';
+import { useCustomers } from '@/hooks/use-customers';
+import NoteItem from './note-item';
+import AddNoteModal from './add-note-modal';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ExpandedCustomerDataProps {
   customer: Customer;
 }
 
 export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataProps) {
-  const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
+  const [addNoteModalOpen, setAddNoteModalOpen] = useState(false);
+  const { useCustomerNotes } = useCustomers();
+  
+  // Fetch notes for this customer
+  const { data: notes = [], isLoading: notesLoading } = useCustomerNotes(customer.id);
+  
+  // Filter key notes
+  const keyNotes = notes.filter(note => note.isKey);
   
   return (
-    <div className="bg-gray-50 p-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">Contact Details</h4>
-          <div className="text-sm mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block mr-1 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-            </svg> 
-            {customer.phone || 'N/A'}
-          </div>
-          <div className="text-sm mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block mr-1 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clipRule="evenodd" />
-            </svg> 
-            {customer.website ? (
-              <a 
-                href={customer.website.startsWith('http') ? customer.website : `http://${customer.website}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800"
-              >
-                {customer.website}
-              </a>
-            ) : 'N/A'}
-          </div>
-        </div>
-        
-        <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">Business Details</h4>
-          <div className="text-sm mb-2"><strong>Value Tier:</strong> {customer.valueTier || 'N/A'}</div>
-          <div className="text-sm mb-2"><strong>Direct Import:</strong> {customer.directImport || 'N/A'}</div>
-          
-          {customer.tags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {customer.tags.map((tag, index) => (
-                <span 
-                  key={index} 
-                  className="tag-badge inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
+    <div className="p-4 bg-gray-50 border-t border-gray-200">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Tabs defaultValue="notes">
+            <TabsList className="mb-4">
+              <TabsTrigger value="notes">All Notes ({notes.length})</TabsTrigger>
+              <TabsTrigger value="key-notes">Key Notes ({keyNotes.length})</TabsTrigger>
+              <TabsTrigger value="details">Customer Details</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="notes" className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Notes</h3>
+                <Button 
+                  onClick={() => setAddNoteModalOpen(true)}
+                  size="sm"
                 >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">Follow-up Information</h4>
-          <div className="text-sm mb-2">
-            <strong>Last Follow-up:</strong> {customer.lastFollowUpDate ? new Date(customer.lastFollowUpDate).toLocaleDateString() : 'N/A'}
-          </div>
-          <div className="text-sm mb-2">
-            <strong>Next Follow-up:</strong> {customer.nextFollowUpDate ? new Date(customer.nextFollowUpDate).toLocaleDateString() : 'N/A'}
-          </div>
-        </div>
-        
-        <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">Requirements</h4>
-          <p className="text-sm text-gray-700">{customer.requirements || 'No requirements specified.'}</p>
+                  Add Note
+                </Button>
+              </div>
+              
+              {notesLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                </div>
+              ) : notes.length > 0 ? (
+                <div className="space-y-3">
+                  {notes.map((note: Note) => (
+                    <NoteItem key={note.id} note={note} customerId={customer.id} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No notes found for this customer.</p>
+                  <p className="text-sm mt-1">Add a note to keep track of your interactions.</p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="key-notes" className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Key Notes</h3>
+                <Button 
+                  onClick={() => setAddNoteModalOpen(true)}
+                  size="sm"
+                >
+                  Add Note
+                </Button>
+              </div>
+              
+              {notesLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-32 w-full" />
+                </div>
+              ) : keyNotes.length > 0 ? (
+                <div className="space-y-3">
+                  {keyNotes.map((note: Note) => (
+                    <NoteItem key={note.id} note={note} customerId={customer.id} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No key notes found for this customer.</p>
+                  <p className="text-sm mt-1">Mark important notes as key to see them here.</p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="details">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Business Information</h3>
+                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Customer Type</p>
+                        <p className="font-medium">{customer.customerType}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Status</p>
+                        <p className="font-medium">{customer.status}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Priority</p>
+                        <p className="font-medium">{customer.priority}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Value Tier</p>
+                        <p className="font-medium">{customer.valueTier || 'Not assigned'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Direct Import</p>
+                        <p className="font-medium">{customer.directImport || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Returning Customer</p>
+                        <p className="font-medium">{customer.isReturningCustomer ? 'Yes' : 'No'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500">Requirements</p>
+                      <p className="mt-1">{customer.requirements || 'No requirements specified'}</p>
+                    </div>
+                    
+                    {customer.tags && customer.tags.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-500">Tags</p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {customer.tags.map((tag, index) => (
+                            <span 
+                              key={index} 
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Contact Details</h3>
+                  <div className="bg-white p-4 rounded-md border border-gray-200">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2">
+                        <p className="text-sm text-gray-500">Contact Person</p>
+                        <p className="font-medium">{customer.contactPerson}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-sm text-gray-500">Email</p>
+                        <p className="font-medium">{customer.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Phone</p>
+                        <p className="font-medium">{customer.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Website</p>
+                        <p className="font-medium truncate">
+                          {customer.website ? (
+                            <a 
+                              href={customer.website.startsWith('http') ? customer.website : `https://${customer.website}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {customer.website}
+                            </a>
+                          ) : 'Not provided'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500">Location</p>
+                      <p className="font-medium">
+                        {[customer.city, customer.region, customer.country]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </p>
+                    </div>
+                    
+                    <div className="mt-4 grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Last Follow-up</p>
+                        <p className="font-medium">
+                          {customer.lastFollowUpDate ? 
+                            new Date(customer.lastFollowUpDate).toLocaleDateString() : 
+                            'Not set'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Next Follow-up</p>
+                        <p className="font-medium">
+                          {customer.nextFollowUpDate ? 
+                            new Date(customer.nextFollowUpDate).toLocaleDateString() : 
+                            'Not scheduled'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {(customer.lastContactNotes || customer.keyMeetingPoints) && (
+                    <div className="mt-4 bg-white p-4 rounded-md border border-gray-200">
+                      {customer.lastContactNotes && (
+                        <div className="mb-3">
+                          <p className="text-sm text-gray-500">Last Contact Notes</p>
+                          <p className="mt-1">{customer.lastContactNotes}</p>
+                        </div>
+                      )}
+                      
+                      {customer.keyMeetingPoints && (
+                        <div>
+                          <p className="text-sm text-gray-500">Key Meeting Points</p>
+                          <p className="mt-1">{customer.keyMeetingPoints}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
       
-      {/* Notes Section */}
-      <div className="mt-4">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-medium text-gray-700">Notes & Communications</h4>
-          <button 
-            onClick={() => setIsAddNoteModalOpen(true)}
-            className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            Add Note
-          </button>
-        </div>
-        
-        <div className="space-y-3">
-          {customer.notes && customer.notes.length > 0 ? (
-            customer.notes.map((note: Note) => (
-              <NoteItem 
-                key={note.id} 
-                note={note} 
-                customerId={customer.id} 
-              />
-            ))
-          ) : (
-            <div className="bg-white rounded-md p-3 border border-gray-200 text-sm text-gray-500">
-              No notes yet. Add a note to keep track of your communications with this customer.
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Add Note Modal */}
-      {isAddNoteModalOpen && (
-        <AddNoteModal 
-          customerId={customer.id}
-          isOpen={isAddNoteModalOpen}
-          onClose={() => setIsAddNoteModalOpen(false)}
-        />
-      )}
+      <AddNoteModal 
+        customerId={customer.id}
+        isOpen={addNoteModalOpen}
+        onClose={() => setAddNoteModalOpen(false)}
+      />
     </div>
   );
 }

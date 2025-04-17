@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import useCustomerStore from '@/hooks/use-customer-store';
+import { useCustomers } from '@/hooks/use-customers';
 import { Customer, Priority, CustomerStatus, CustomerType, ValueTier, DirectImport } from '@/types/customer';
 import { useToast } from '@/hooks/use-toast';
 import TagInput from '@/components/tag-input';
@@ -32,7 +32,7 @@ interface EditCustomerModalProps {
 }
 
 export default function EditCustomerModal({ customer, isOpen, onClose }: EditCustomerModalProps) {
-  const { editCustomer } = useCustomerStore();
+  const { updateCustomer } = useCustomers();
   const { toast } = useToast();
   
   const [isReturningCustomer, setIsReturningCustomer] = useState(customer.isReturningCustomer);
@@ -167,7 +167,7 @@ export default function EditCustomerModal({ customer, isOpen, onClose }: EditCus
       keyMeetingPoints,
     };
     
-    editCustomer(customer.id, updatedCustomer);
+    updateCustomer(customer.id, updatedCustomer);
     
     toast({
       title: "Customer Updated",

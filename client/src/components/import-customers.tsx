@@ -148,9 +148,6 @@ export default function ImportCustomers() {
                 keyMeetingPoints: rowData.keyMeetingPoints || rowData.key_meeting_points || '',
                 isHotLead: Boolean(rowData.isHotLead || rowData.hot_lead || false),
                 isPinned: Boolean(rowData.isPinned || rowData.pinned || false),
-                // These are required fields in the database schema
-                createdAt: new Date(),
-                updatedAt: new Date(),
               };
               
               // Add the customer

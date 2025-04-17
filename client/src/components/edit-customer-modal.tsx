@@ -165,6 +165,10 @@ export default function EditCustomerModal({ customer, isOpen, onClose }: EditCus
       // Notes
       lastContactNotes,
       keyMeetingPoints,
+      
+      // Make sure to preserve these flags
+      isHotLead: customer.isHotLead,
+      isPinned: customer.isPinned,
     };
     
     updateCustomer(customer.id, updatedCustomer);

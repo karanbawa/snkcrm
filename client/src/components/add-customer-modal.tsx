@@ -167,7 +167,10 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
       // Notes
       lastContactNotes,
       keyMeetingPoints,
-      // Notes are added separately through the API
+      
+      // Enhancement flags
+      isHotLead: false,
+      isPinned: false,
     };
     
     addCustomer(newCustomer);

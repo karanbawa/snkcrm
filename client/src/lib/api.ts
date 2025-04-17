@@ -17,10 +17,12 @@ export async function fetchCustomer(id: string): Promise<Customer> {
 }
 
 export async function createCustomer(customer: Partial<Customer>): Promise<Customer> {
-  // Ensure required fields are present
+  // Ensure required fields are present and log for debugging
+  console.log('Creating customer with data:', customer);
+  
   const customerWithDefaults = {
     ...customer,
-    name: customer.name || 'Unknown',
+    name: customer.name || 'Unknown Company',
     contactPerson: customer.contactPerson || 'No Contact',
     email: customer.email || 'no-email@example.com',
     phone: customer.phone || '',
@@ -43,6 +45,13 @@ export async function createCustomer(customer: Partial<Customer>): Promise<Custo
     isHotLead: customer.isHotLead || false,
     isPinned: customer.isPinned || false,
   };
+  
+  // Extra verification for the name field
+  if (!customerWithDefaults.name || customerWithDefaults.name === 'Unknown' || customerWithDefaults.name === '') {
+    customerWithDefaults.name = 'Unknown Company #' + new Date().getTime();
+  }
+  
+  console.log('Sending customer data to API:', customerWithDefaults);
   
   return await apiRequest<Customer>({ 
     url: '/api/customers',

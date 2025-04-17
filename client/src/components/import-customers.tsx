@@ -150,8 +150,36 @@ export default function ImportCustomers() {
                 isPinned: Boolean(rowData.isPinned || rowData.pinned || false),
               };
               
-              // Add the customer
-              await addCustomer(customer as Omit<Customer, 'id'>);
+              // Debug log
+              console.log('About to import customer with name:', customer.name);
+              
+              // Add the customer - don't include the ID as the server will generate one
+              const customerToAdd = {
+                name: customer.name, // Ensure name is set
+                contactPerson: customer.contactPerson,
+                email: customer.email,
+                phone: customer.phone,
+                country: customer.country,
+                region: customer.region,
+                city: customer.city,
+                website: customer.website,
+                customerType: customer.customerType,
+                requirements: customer.requirements,
+                status: customer.status,
+                priority: customer.priority,
+                tags: customer.tags,
+                isReturningCustomer: customer.isReturningCustomer,
+                valueTier: customer.valueTier,
+                directImport: customer.directImport,
+                lastFollowUpDate: customer.lastFollowUpDate,
+                nextFollowUpDate: customer.nextFollowUpDate,
+                lastContactNotes: customer.lastContactNotes,
+                keyMeetingPoints: customer.keyMeetingPoints,
+                isHotLead: customer.isHotLead,
+                isPinned: customer.isPinned,
+              };
+              
+              await addCustomer(customerToAdd);
               importedCount++;
             } catch (err) {
               console.error('Error importing customer:', err);

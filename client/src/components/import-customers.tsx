@@ -154,32 +154,34 @@ export default function ImportCustomers() {
               console.log('About to import customer with name:', customer.name);
               
               // Add the customer - don't include the ID as the server will generate one
+              // Use non-null assertions for required fields to satisfy TypeScript
               const customerToAdd = {
-                name: customer.name, // Ensure name is set
-                contactPerson: customer.contactPerson,
-                email: customer.email,
-                phone: customer.phone,
-                country: customer.country,
-                region: customer.region,
-                city: customer.city,
-                website: customer.website,
-                customerType: customer.customerType,
-                requirements: customer.requirements,
-                status: customer.status,
-                priority: customer.priority,
-                tags: customer.tags,
-                isReturningCustomer: customer.isReturningCustomer,
-                valueTier: customer.valueTier,
-                directImport: customer.directImport,
-                lastFollowUpDate: customer.lastFollowUpDate,
-                nextFollowUpDate: customer.nextFollowUpDate,
-                lastContactNotes: customer.lastContactNotes,
-                keyMeetingPoints: customer.keyMeetingPoints,
-                isHotLead: customer.isHotLead,
-                isPinned: customer.isPinned,
+                name: customer.name || 'Unknown Company', // Ensure name is set
+                contactPerson: customer.contactPerson || 'No Contact',
+                email: customer.email || 'no-email@example.com',
+                phone: customer.phone || '',
+                country: customer.country || 'Unknown',
+                region: customer.region || '',
+                city: customer.city || 'Unknown',
+                website: customer.website || '',
+                customerType: customer.customerType || 'Other',
+                requirements: customer.requirements || '',
+                status: customer.status || 'Lead',
+                priority: customer.priority || 'Medium',
+                tags: customer.tags || [],
+                isReturningCustomer: customer.isReturningCustomer || false,
+                valueTier: customer.valueTier || 'Standard',
+                directImport: customer.directImport || 'No',
+                lastFollowUpDate: customer.lastFollowUpDate || '',
+                nextFollowUpDate: customer.nextFollowUpDate || '',
+                lastContactNotes: customer.lastContactNotes || '',
+                keyMeetingPoints: customer.keyMeetingPoints || '',
+                isHotLead: customer.isHotLead || false,
+                isPinned: customer.isPinned || false,
               };
               
-              await addCustomer(customerToAdd);
+              // Force type assertion to meet the TypeScript requirements
+              await addCustomer(customerToAdd as Omit<Customer, 'id'>);
               importedCount++;
             } catch (err) {
               console.error('Error importing customer:', err);

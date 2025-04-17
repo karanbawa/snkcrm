@@ -54,8 +54,9 @@ export default function CustomerTable() {
             nextFollowUpDate: '',
             lastContactNotes: '',
             keyMeetingPoints: '',
-            notes: [],
-            isReturningCustomer: false
+            isReturningCustomer: false,
+            isHotLead: false,
+            isPinned: false
           })}
           className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 flex items-center"
         >
@@ -85,8 +86,11 @@ export default function CustomerTable() {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Priority
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Manage
                 </th>
               </tr>
             </thead>
@@ -95,7 +99,7 @@ export default function CustomerTable() {
                 // Loading state
                 Array.from({ length: 5 }).map((_, index) => (
                   <tr key={index}>
-                    <td colSpan={6} className="px-6 py-4">
+                    <td colSpan={7} className="px-6 py-4">
                       <Skeleton className="h-12 w-full" />
                     </td>
                   </tr>
@@ -103,14 +107,14 @@ export default function CustomerTable() {
               ) : isError ? (
                 // Error state
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-red-500">
+                  <td colSpan={7} className="px-6 py-10 text-center text-sm text-red-500">
                     Error loading customers. Please try again later.
                   </td>
                 </tr>
               ) : currentCustomers.length === 0 ? (
                 // Empty state
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
                     No customers found. Add a new customer to get started.
                   </td>
                 </tr>

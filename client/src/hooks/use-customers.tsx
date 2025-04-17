@@ -284,6 +284,8 @@ export function useCustomers() {
     addNote: (customerId: string, note: Omit<Note, 'id' | 'timestamp'>) => addNoteMutation.mutate({ customerId, note }),
     deleteNote: (customerId: string, noteId: string) => deleteNoteMutation.mutate({ customerId, noteId }),
     toggleKeyNote: (customerId: string, noteId: string) => toggleKeyNoteMutation.mutate({ customerId, noteId }),
+    toggleHotLead: (customerId: string) => toggleHotLeadMutation.mutate(customerId),
+    togglePinned: (customerId: string) => togglePinnedMutation.mutate(customerId),
     useCustomerNotes,
     
     // Filters

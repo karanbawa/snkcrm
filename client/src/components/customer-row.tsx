@@ -5,6 +5,7 @@ import StatusBadge from '@/components/status-badge';
 import PriorityBadge from '@/components/priority-badge';
 import ReturningCustomerBadge from '@/components/returning-customer-badge';
 import ExpandedCustomerData from '@/components/expanded-customer-data';
+import CustomerActionButtons from '@/components/customer-action-buttons';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -25,7 +26,7 @@ interface CustomerRowProps {
 }
 
 export default function CustomerRow({ customer, isExpanded, onToggleExpand, onEdit }: CustomerRowProps) {
-  const { deleteCustomer } = useCustomers();
+  const { deleteCustomer, toggleHotLead, togglePinned } = useCustomers();
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
@@ -36,6 +37,14 @@ export default function CustomerRow({ customer, isExpanded, onToggleExpand, onEd
       description: `${customer.name} has been deleted from your database.`,
     });
     setShowDeleteDialog(false);
+  };
+  
+  const handleToggleHotLead = (id: string) => {
+    toggleHotLead(id);
+  };
+  
+  const handleTogglePinned = (id: string) => {
+    togglePinned(id);
   };
   
   return (
@@ -70,6 +79,14 @@ export default function CustomerRow({ customer, isExpanded, onToggleExpand, onEd
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <PriorityBadge priority={customer.priority} />
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <CustomerActionButtons 
+            customer={customer} 
+            onToggleHotLead={handleToggleHotLead} 
+            onTogglePinned={handleTogglePinned}
+            size="sm"
+          />
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <div className="flex items-center justify-end space-x-2">

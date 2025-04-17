@@ -71,7 +71,7 @@ export default function NoteItem({ note, customerId }: NoteItemProps) {
           
           {showImages && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
-              {note.images.map((image, index) => (
+              {note.images.map((image: string, index: number) => (
                 <div key={index} className="relative">
                   <img 
                     src={image} 

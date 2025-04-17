@@ -54,6 +54,7 @@ export interface Note {
   timestamp: string;
   nextStep: string;
   isKey: boolean;
+  images?: string[];
 }
 
 export interface EmailLog {

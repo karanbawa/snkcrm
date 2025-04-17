@@ -1,4 +1,5 @@
-import { Link } from 'wouter';
+import { useState } from 'react';
+import { Link, useLocation } from 'wouter';
 import { useCustomers } from '@/hooks/use-customers';
 import { 
   Card, 
@@ -9,17 +10,29 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { 
   BarChartIcon, 
   ChatBubbleIcon, 
   PersonIcon, 
   CalendarIcon, 
-  PlusIcon 
+  PlusIcon,
+  RocketIcon,
+  MagnifyingGlassIcon,
+  InfoCircledIcon,
+  CheckCircledIcon
 } from '@radix-ui/react-icons';
 import ActivityFeed from '@/components/activity-feed';
+import { useToast } from '@/hooks/use-toast';
+import AddCustomerModal from '@/components/add-customer-modal';
+import AddFollowupModal from '@/components/add-followup-modal';
 
 export default function Dashboard() {
+  const [location, navigate] = useLocation();
+  const { toast } = useToast();
   const { customers, isLoading } = useCustomers();
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [isAddFollowupOpen, setIsAddFollowupOpen] = useState(false);
   
   const customerCount = customers.length;
   const hotLeads = customers.filter(c => c.isHotLead).length;

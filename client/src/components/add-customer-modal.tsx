@@ -167,9 +167,7 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
       // Notes
       lastContactNotes,
       keyMeetingPoints,
-      
-      // Empty notes array
-      notes: [],
+      // Notes are added separately through the API
     };
     
     addCustomer(newCustomer);
@@ -361,7 +359,7 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
                   <SelectValue placeholder="Select tier" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select tier</SelectItem>
+                  <SelectItem value="_none">Select tier</SelectItem>
                   <SelectItem value="Premium">Premium</SelectItem>
                   <SelectItem value="Standard">Standard</SelectItem>
                   <SelectItem value="Basic">Basic</SelectItem>
@@ -376,7 +374,7 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
                   <SelectValue placeholder="Select option" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select option</SelectItem>
+                  <SelectItem value="_none">Select option</SelectItem>
                   <SelectItem value="Yes">Yes</SelectItem>
                   <SelectItem value="No">No</SelectItem>
                   <SelectItem value="Distributor">Distributor</SelectItem>

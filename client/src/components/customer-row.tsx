@@ -25,7 +25,7 @@ interface CustomerRowProps {
 }
 
 export default function CustomerRow({ customer, isExpanded, onToggleExpand, onEdit }: CustomerRowProps) {
-  const { deleteCustomer } = useCustomerStore();
+  const { deleteCustomer } = useCustomers();
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
@@ -49,9 +49,7 @@ export default function CustomerRow({ customer, isExpanded, onToggleExpand, onEd
                   {customer.name}
                 </div>
                 {customer.isReturningCustomer && (
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Returning
-                  </span>
+                  <ReturningCustomerBadge className="ml-2" />
                 )}
               </div>
               <div className="text-sm text-gray-500">

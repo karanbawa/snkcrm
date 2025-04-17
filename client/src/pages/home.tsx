@@ -3,6 +3,7 @@ import Header from '@/components/header';
 import CustomerTable from '@/components/customer-table';
 import CustomerSearchFilters from '@/components/customer-search-filters';
 import AddCustomerModal from '@/components/add-customer-modal';
+import ExportToExcel from '@/components/export-to-excel';
 
 export default function Home() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -18,7 +19,8 @@ export default function Home() {
             <h2 className="text-2xl font-semibold text-gray-900">Customer Database</h2>
             <p className="mt-1 text-sm text-gray-500">Manage all your customers, leads, and interactions</p>
           </div>
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex space-x-3">
+            <ExportToExcel />
             <button 
               onClick={() => setIsAddModalOpen(true)}
               className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md flex items-center transition-colors duration-200"

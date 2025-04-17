@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { storage, generateId } from '@/lib/utils';
-import { Customer, CustomerNote, CustomerStatus, CustomerType, CustomerPriority } from '@shared/schema';
-import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Customer, Note, CustomerStatus, Priority, CustomerType } from '@/types/customer';
+import { useState } from 'react';
+import { useToast } from './use-toast';
+import { v4 as uuidv4 } from 'uuid';
+import * as api from '@/lib/api';
 
 type FilterState = {
   search: string;
@@ -12,9 +14,10 @@ type FilterState = {
 };
 
 export function useCustomers() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [notes, setNotes] = useState<CustomerNote[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Filters state
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     country: '',
@@ -22,166 +25,211 @@ export function useCustomers() {
     priority: '',
     customerType: '',
   });
-  const { toast } = useToast();
 
-  // Load data from localStorage
-  useEffect(() => {
-    const storedCustomers = storage.getCustomers();
-    const storedNotes = storage.getNotes();
-    setCustomers(storedCustomers);
-    setNotes(storedNotes);
-    setIsLoading(false);
-  }, []);
+  // Fetch all customers
+  const { data: customers = [], isLoading, isError } = useQuery({
+    queryKey: ['/api/customers'],
+    queryFn: api.fetchCustomers,
+  });
 
-  // Save data to localStorage when it changes
-  useEffect(() => {
-    if (!isLoading) {
-      storage.saveCustomers(customers);
-    }
-  }, [customers, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      storage.saveNotes(notes);
-    }
-  }, [notes, isLoading]);
-
-  // Get filtered customers
-  const filteredCustomers = useCallback(() => {
-    return customers.filter(customer => {
-      // Apply filters
-      if (filters.country && customer.country !== filters.country) return false;
-      if (filters.status && customer.status !== filters.status) return false;
-      if (filters.priority && customer.priority !== filters.priority) return false;
-      if (filters.customerType && customer.customerType !== filters.customerType) return false;
-
-      // Apply search
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        const matchesName = customer.name.toLowerCase().includes(searchLower);
-        const matchesTags = customer.tags.some(tag => tag.toLowerCase().includes(searchLower));
-        const matchesRequirements = customer.requirements.toLowerCase().includes(searchLower);
-        
-        return matchesName || matchesTags || matchesRequirements;
-      }
-
-      return true;
-    });
-  }, [customers, filters]);
-
-  // CRUD operations for customers
-  const addCustomer = useCallback((customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newCustomer: Customer = {
-      ...customer,
-      id: generateId(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setCustomers(prev => [...prev, newCustomer]);
-    toast({
-      title: "Customer added",
-      description: `${customer.name} has been added to your customers.`,
-    });
+  // Filter customers
+  const filteredCustomers = customers.filter(customer => {
+    const matchesSearch = !filters.search || 
+      customer.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      customer.tags.some(tag => tag.toLowerCase().includes(filters.search.toLowerCase())) ||
+      customer.requirements.toLowerCase().includes(filters.search.toLowerCase());
+      
+    const matchesCountry = !filters.country || customer.country === filters.country;
+    const matchesStatus = !filters.status || customer.status === filters.status;
+    const matchesPriority = !filters.priority || customer.priority === filters.priority;
+    const matchesType = !filters.customerType || customer.customerType === filters.customerType;
     
-    return newCustomer;
-  }, [toast]);
+    return matchesSearch && matchesCountry && matchesStatus && matchesPriority && matchesType;
+  });
 
-  const updateCustomer = useCallback((id: string, updates: Partial<Customer>) => {
-    setCustomers(prev => 
-      prev.map(customer => 
-        customer.id === id 
-          ? { 
-              ...customer, 
-              ...updates, 
-              updatedAt: new Date().toISOString() 
-            } 
-          : customer
-      )
-    );
-    toast({
-      title: "Customer updated",
-      description: "The customer information has been updated.",
+  // Add a new customer
+  const addCustomerMutation = useMutation({
+    mutationFn: (newCustomer: Omit<Customer, 'id'>) => {
+      return api.createCustomer(newCustomer);
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Customer added successfully',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to add customer',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
+  });
+
+  // Delete a customer
+  const deleteCustomerMutation = useMutation({
+    mutationFn: (id: string) => {
+      return api.deleteCustomer(id);
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Customer deleted successfully',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete customer',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
+  });
+
+  // Update a customer
+  const updateCustomerMutation = useMutation({
+    mutationFn: ({ id, customer }: { id: string; customer: Customer }) => {
+      return api.updateCustomer(id, customer);
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Customer updated successfully',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update customer',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
+  });
+
+  // Add a note to a customer
+  const addNoteMutation = useMutation({
+    mutationFn: ({ customerId, note }: { customerId: string; note: Omit<Note, 'id' | 'timestamp'> }) => {
+      return api.createNote(customerId, note);
+    },
+    onSuccess: (_, { customerId }) => {
+      toast({
+        title: 'Success',
+        description: 'Note added successfully',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers', customerId, 'notes'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to add note',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
+  });
+
+  // Delete a note
+  const deleteNoteMutation = useMutation({
+    mutationFn: ({ noteId, customerId }: { noteId: string; customerId: string }) => {
+      return api.deleteNote(noteId);
+    },
+    onSuccess: (_, { customerId }) => {
+      toast({
+        title: 'Success',
+        description: 'Note deleted successfully',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers', customerId, 'notes'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete note',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
+  });
+
+  // Toggle key note
+  const toggleKeyNoteMutation = useMutation({
+    mutationFn: ({ noteId, customerId }: { noteId: string; customerId: string }) => {
+      return api.toggleKeyNote(noteId);
+    },
+    onSuccess: (_, { customerId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers', customerId, 'notes'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to toggle key note',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
+  });
+
+  // Hook for fetching notes for a specific customer
+  const useCustomerNotes = (customerId: string) => {
+    return useQuery({
+      queryKey: ['/api/customers', customerId, 'notes'],
+      queryFn: () => api.fetchCustomerNotes(customerId),
+      enabled: !!customerId
     });
-  }, [toast]);
-
-  const deleteCustomer = useCallback((id: string) => {
-    setCustomers(prev => prev.filter(customer => customer.id !== id));
-    // Also delete associated notes
-    setNotes(prev => prev.filter(note => note.customerId !== id));
-    toast({
-      title: "Customer deleted",
-      description: "The customer and all associated data have been removed.",
-    });
-  }, [toast]);
-
-  const getCustomerById = useCallback((id: string) => {
-    return customers.find(customer => customer.id === id);
-  }, [customers]);
-
-  // CRUD operations for notes
-  const getNotesForCustomer = useCallback((customerId: string) => {
-    return notes.filter(note => note.customerId === customerId)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [notes]);
-
-  const addNote = useCallback((note: Omit<CustomerNote, 'id' | 'timestamp'>) => {
-    const newNote: CustomerNote = {
-      ...note,
-      id: generateId(),
-      timestamp: new Date().toISOString(),
-    };
-
-    setNotes(prev => [...prev, newNote]);
-    toast({
-      title: "Note added",
-      description: "Your note has been saved.",
-    });
-    
-    return newNote;
-  }, [toast]);
-
-  const updateNote = useCallback((id: string, updates: Partial<CustomerNote>) => {
-    setNotes(prev => 
-      prev.map(note => 
-        note.id === id 
-          ? { ...note, ...updates } 
-          : note
-      )
-    );
-    toast({
-      title: "Note updated",
-      description: "Your note has been updated.",
-    });
-  }, [toast]);
-
-  const deleteNote = useCallback((id: string) => {
-    setNotes(prev => prev.filter(note => note.id !== id));
-    toast({
-      title: "Note deleted",
-      description: "The note has been removed.",
-    });
-  }, [toast]);
-
-  // Update filters
-  const updateFilters = useCallback((newFilters: Partial<FilterState>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  }, []);
+  };
 
   return {
-    customers,
-    filteredCustomers: filteredCustomers(),
-    notes,
-    filters,
+    customers: filteredCustomers,
     isLoading,
-    addCustomer,
-    updateCustomer,
-    deleteCustomer,
-    getCustomerById,
-    getNotesForCustomer,
-    addNote,
-    updateNote,
-    deleteNote,
-    updateFilters,
+    isError,
+    addCustomer: (customer: Omit<Customer, 'id'>) => addCustomerMutation.mutate(customer),
+    deleteCustomer: (id: string) => deleteCustomerMutation.mutate(id),
+    updateCustomer: (id: string, customer: Customer) => updateCustomerMutation.mutate({ id, customer }),
+    addNote: (customerId: string, note: Omit<Note, 'id' | 'timestamp'>) => addNoteMutation.mutate({ customerId, note }),
+    deleteNote: (customerId: string, noteId: string) => deleteNoteMutation.mutate({ customerId, noteId }),
+    toggleKeyNote: (customerId: string, noteId: string) => toggleKeyNoteMutation.mutate({ customerId, noteId }),
+    useCustomerNotes,
+    
+    // Filters
+    filters,
+    setFilter: (key: keyof FilterState, value: string) => {
+      setFilters(prev => ({ ...prev, [key]: value }));
+    },
+    resetFilters: () => {
+      setFilters({
+        search: '',
+        country: '',
+        status: '',
+        priority: '',
+        customerType: '',
+      });
+    }
   };
 }

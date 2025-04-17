@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import useCustomerStore from '@/hooks/use-customer-store';
+import { useCustomers } from '@/hooks/use-customers';
 import { Note } from '@/types/customer';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,7 +24,7 @@ interface AddNoteModalProps {
 }
 
 export default function AddNoteModal({ customerId, isOpen, onClose }: AddNoteModalProps) {
-  const { addNote } = useCustomerStore();
+  const { addNote } = useCustomers();
   const { toast } = useToast();
   
   const [noteText, setNoteText] = useState('');

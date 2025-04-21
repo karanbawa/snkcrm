@@ -2,6 +2,8 @@ import { IStorage } from './storage';
 import { Customer, Note, EmailLog, ActivityLog, User, toMongoId } from './mongo';
 import mongoose from 'mongoose';
 import { log } from './vite';
+import { MongoClient, ObjectId, Db, Collection } from 'mongodb';
+import { IStorage as IStorageInterface, Customer as CustomerType } from './storage-interface';
 
 // Storage implementation for MongoDB
 export class MongoStorage implements IStorage {
@@ -63,11 +65,8 @@ export class MongoStorage implements IStorage {
 
   async createCustomer(customer: any): Promise<any> {
     try {
-      // Remove any existing id to let MongoDB generate a new one
-      const { id, ...customerData } = customer;
-      
       const newCustomer = new Customer({
-        ...customerData,
+        ...customer,
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -476,3 +475,252 @@ export class MongoStorage implements IStorage {
 
 // Export an instance of the storage
 export const mongoStorage = new MongoStorage();
+
+export class CustomerStorage implements IStorage {
+  private client: MongoClient | null = null;
+  private db: Db | null = null;
+  private customersCollection: Collection | null = null;
+  private usersCollection: Collection | null = null;
+  private notesCollection: Collection | null = null;
+  private emailLogsCollection: Collection | null = null;
+  private activityLogsCollection: Collection | null = null;
+
+  async connect(uri: string): Promise<void> {
+    this.client = new MongoClient(uri);
+    await this.client.connect();
+    this.db = this.client.db('crm');
+    this.customersCollection = this.db.collection('customers');
+    this.usersCollection = this.db.collection('users');
+    this.notesCollection = this.db.collection('notes');
+    this.emailLogsCollection = this.db.collection('emailLogs');
+    this.activityLogsCollection = this.db.collection('activityLogs');
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.client) {
+      await this.client.close();
+      this.client = null;
+      this.db = null;
+      this.customersCollection = null;
+      this.usersCollection = null;
+      this.notesCollection = null;
+      this.emailLogsCollection = null;
+      this.activityLogsCollection = null;
+    }
+  }
+
+  private toCustomer(doc: any): CustomerType {
+    return {
+      _id: doc._id.toString(),
+      name: doc.name,
+      email: doc.email,
+      phone: doc.phone,
+      address: doc.address,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt
+    };
+  }
+
+  async createCustomer(customerData: Omit<CustomerType, '_id'>): Promise<CustomerType> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    
+    const now = new Date();
+    const result = await this.customersCollection.insertOne({
+      ...customerData,
+      createdAt: now,
+      updatedAt: now
+    });
+    
+    return this.toCustomer({ _id: result.insertedId, ...customerData, createdAt: now, updatedAt: now });
+  }
+
+  async getCustomers(): Promise<CustomerType[]> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    
+    const docs = await this.customersCollection.find().toArray();
+    return docs.map(doc => this.toCustomer(doc));
+  }
+
+  async getCustomerById(id: string): Promise<CustomerType | null> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    
+    const doc = await this.customersCollection.findOne({ _id: new ObjectId(id) });
+    return doc ? this.toCustomer(doc) : null;
+  }
+
+  async updateCustomer(id: string, updateData: Partial<CustomerType>): Promise<CustomerType | null> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    
+    const now = new Date();
+    const result = await this.customersCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { ...updateData, updatedAt: now } },
+      { returnDocument: 'after' }
+    );
+    
+    return result ? this.toCustomer(result) : null;
+  }
+
+  async deleteCustomer(id: string): Promise<boolean> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    
+    const result = await this.customersCollection.deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
+  }
+
+  // User operations
+  async getUser(id: number): Promise<any | undefined> {
+    if (!this.usersCollection) throw new Error('Not connected to database');
+    return this.usersCollection.findOne({ id });
+  }
+
+  async getUserByUsername(username: string): Promise<any | undefined> {
+    if (!this.usersCollection) throw new Error('Not connected to database');
+    return this.usersCollection.findOne({ username });
+  }
+
+  async createUser(user: any): Promise<any> {
+    if (!this.usersCollection) throw new Error('Not connected to database');
+    const result = await this.usersCollection.insertOne(user);
+    return { ...user, _id: result.insertedId };
+  }
+
+  // Additional customer operations
+  async getAllCustomers(): Promise<any[]> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    return this.customersCollection.find().toArray();
+  }
+
+  async getCustomer(id: string): Promise<any | undefined> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    return this.customersCollection.findOne({ _id: new ObjectId(id) });
+  }
+
+  async toggleHotLead(id: string): Promise<any | undefined> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    const customer = await this.getCustomer(id);
+    if (!customer) return undefined;
+    const result = await this.customersCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { isHotLead: !customer.isHotLead } },
+      { returnDocument: 'after' }
+    );
+    return result;
+  }
+
+  async togglePinned(id: string): Promise<any | undefined> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    const customer = await this.getCustomer(id);
+    if (!customer) return undefined;
+    const result = await this.customersCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { isPinned: !customer.isPinned } },
+      { returnDocument: 'after' }
+    );
+    return result;
+  }
+
+  async getCustomersWithUpcomingFollowUps(days: number): Promise<any[]> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return this.customersCollection.find({
+      nextFollowUp: { $lte: date }
+    }).toArray();
+  }
+
+  async getCustomersNeedingAttention(): Promise<any[]> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    return this.customersCollection.find({
+      $or: [
+        { isHotLead: true },
+        { isPinned: true },
+        { nextFollowUp: { $lte: new Date() } }
+      ]
+    }).toArray();
+  }
+
+  // Note operations
+  async getNotesForCustomer(customerId: string): Promise<any[]> {
+    if (!this.notesCollection) throw new Error('Not connected to database');
+    return this.notesCollection.find({ customerId: new ObjectId(customerId) }).toArray();
+  }
+
+  async getNoteById(id: string): Promise<any | undefined> {
+    if (!this.notesCollection) throw new Error('Not connected to database');
+    return this.notesCollection.findOne({ _id: new ObjectId(id) });
+  }
+
+  async createNote(note: any): Promise<any> {
+    if (!this.notesCollection) throw new Error('Not connected to database');
+    const result = await this.notesCollection.insertOne(note);
+    return { ...note, _id: result.insertedId };
+  }
+
+  async updateNote(id: string, note: any): Promise<any | undefined> {
+    if (!this.notesCollection) throw new Error('Not connected to database');
+    const result = await this.notesCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: note },
+      { returnDocument: 'after' }
+    );
+    return result;
+  }
+
+  async deleteNote(id: string): Promise<boolean> {
+    if (!this.notesCollection) throw new Error('Not connected to database');
+    const result = await this.notesCollection.deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
+  }
+
+  async toggleKeyNote(id: string): Promise<any | undefined> {
+    if (!this.notesCollection) throw new Error('Not connected to database');
+    const note = await this.getNoteById(id);
+    if (!note) return undefined;
+    const result = await this.notesCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { isKeyNote: !note.isKeyNote } },
+      { returnDocument: 'after' }
+    );
+    return result;
+  }
+
+  // Email log operations
+  async getEmailLogsForCustomer(customerId: string): Promise<any[]> {
+    if (!this.emailLogsCollection) throw new Error('Not connected to database');
+    return this.emailLogsCollection.find({ customerId: new ObjectId(customerId) }).toArray();
+  }
+
+  async createEmailLog(emailLog: any): Promise<any> {
+    if (!this.emailLogsCollection) throw new Error('Not connected to database');
+    const result = await this.emailLogsCollection.insertOne(emailLog);
+    return { ...emailLog, _id: result.insertedId };
+  }
+
+  async deleteEmailLog(id: string): Promise<boolean> {
+    if (!this.emailLogsCollection) throw new Error('Not connected to database');
+    const result = await this.emailLogsCollection.deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
+  }
+
+  // Activity log operations
+  async getAllActivityLogs(limit?: number): Promise<any[]> {
+    if (!this.activityLogsCollection) throw new Error('Not connected to database');
+    const query = this.activityLogsCollection.find().sort({ createdAt: -1 });
+    if (limit) query.limit(limit);
+    return query.toArray();
+  }
+
+  async getActivityLogsForCustomer(customerId: string): Promise<any[]> {
+    if (!this.activityLogsCollection) throw new Error('Not connected to database');
+    return this.activityLogsCollection.find({ customerId: new ObjectId(customerId) })
+      .sort({ createdAt: -1 })
+      .toArray();
+  }
+
+  async createActivityLog(activityLog: any): Promise<any> {
+    if (!this.activityLogsCollection) throw new Error('Not connected to database');
+    const result = await this.activityLogsCollection.insertOne(activityLog);
+    return { ...activityLog, _id: result.insertedId };
+  }
+}

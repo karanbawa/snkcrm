@@ -132,7 +132,7 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
     return true;
   };
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
     
     const newCustomer: Customer = {
@@ -172,15 +172,23 @@ export default function AddCustomerModal({ isOpen, onClose }: AddCustomerModalPr
       isHotLead: false,
       isPinned: false,
     };
-    
-    addCustomer(newCustomer);
-    
-    toast({
-      title: "Customer Added",
-      description: `${name} has been added to your database.`,
-    });
-    
-    onClose();
+
+    try {
+      await addCustomer(newCustomer);
+      
+      toast({
+        title: "Customer Added",
+        description: `${name} has been added to your database.`,
+      });
+      
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add customer. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   return (

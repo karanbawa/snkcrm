@@ -1,17 +1,22 @@
 import mongoose from 'mongoose';
 import { log } from './vite';
+import 'dotenv/config';
 
-// MongoDB connection URL - default to localhost for development
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/snk_customer_db';
+// MongoDB connection URL from environment variable
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error('MONGODB_URI environment variable is not set');
+}
 
 // Connection options for MongoDB
-// Note: directConnection is not supported with SRV URIs
-const isSrvUri = process.env.MONGODB_URI && process.env.MONGODB_URI.startsWith('mongodb+srv://');
+const isSrvUri = MONGODB_URI.startsWith('mongodb+srv://');
+const mongoUri = MONGODB_URI; // Create a constant after the check
 
 export async function connectToMongoDB() {
   try {
     // Log connection attempt (redact sensitive information)
-    log(`Attempting to connect to MongoDB with URI: ${MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')}`, 'mongo');
+    log(`Attempting to connect to MongoDB with URI: ${mongoUri.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')}`, 'mongo');
     
     // Set connection options based on type of URI
     const connectOptions: any = {
@@ -25,16 +30,14 @@ export async function connectToMongoDB() {
     }
     
     // Connect with appropriate options
-    const connectPromise = mongoose.connect(MONGODB_URI, connectOptions);
+    const connectPromise = mongoose.connect(mongoUri, connectOptions);
     
     await connectPromise;
     log('Successfully connected to MongoDB', 'mongo');
     return mongoose.connection;
   } catch (error) {
     log(`Error connecting to MongoDB: ${error}`, 'mongo');
-    // Don't exit the process - allow the application to continue with fallback
-    log('Continuing without MongoDB connection - will use in-memory storage', 'mongo');
-    return null;
+    throw error; // Let the application handle the error
   }
 }
 
@@ -138,11 +141,11 @@ export const EmailLog = mongoose.model('EmailLog', emailLogSchema);
 export const ActivityLog = mongoose.model('ActivityLog', activityLogSchema);
 export const User = mongoose.model('User', userSchema);
 
-// Helper function to convert MongoDB ObjectId to string ID and vice versa
+// Helper function to convert string ID to MongoDB ObjectId
 export function toMongoId(id: string) {
   try {
     return new mongoose.Types.ObjectId(id);
-  } catch (e) {
+  } catch (error) {
     return null;
   }
 }

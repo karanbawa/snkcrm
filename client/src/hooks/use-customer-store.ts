@@ -4,7 +4,7 @@ import { Customer, Note, CustomerStatus, Priority, CustomerType } from '@/types/
 
 interface CustomerStore {
   customers: Customer[];
-  addCustomer: (customer: Customer) => void;
+  addCustomer: (customer: Customer) => Promise<void>;
   editCustomer: (id: string, updatedCustomer: Customer) => void;
   deleteCustomer: (id: string) => void;
   
@@ -37,9 +37,29 @@ const useCustomerStore = create<CustomerStore>()(
     (set, get) => ({
       customers: [],
       
-      addCustomer: (customer) => set(state => ({ 
-        customers: [...state.customers, customer] 
-      })),
+      addCustomer: async (customer) => {
+        try {
+          const response = await fetch('/api/customers', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(customer),
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to add customer');
+          }
+          
+          const newCustomer = await response.json();
+          set(state => ({ 
+            customers: [...state.customers, newCustomer] 
+          }));
+        } catch (error) {
+          console.error('Error adding customer:', error);
+          throw error;
+        }
+      },
       
       editCustomer: (id, updatedCustomer) => set(state => ({
         customers: state.customers.map(c => c.id === id ? updatedCustomer : c)
@@ -98,41 +118,19 @@ const useCustomerStore = create<CustomerStore>()(
       setSearchTerm: (term) => set({ searchTerm: term }),
       
       getFilteredCustomers: () => {
-        const { 
-          customers, 
-          filterCountry, 
-          filterStatus, 
-          filterPriority, 
-          filterCustomerType,
-          searchTerm 
-        } = get();
+        const { customers, filterCountry, filterStatus, filterPriority, filterCustomerType, searchTerm } = get();
         
         return customers.filter(customer => {
-          // Apply filters
-          if (filterCountry && customer.country !== filterCountry) return false;
-          if (filterStatus && customer.status !== filterStatus) return false;
-          if (filterPriority && customer.priority !== filterPriority) return false;
-          if (filterCustomerType && customer.customerType !== filterCustomerType) return false;
+          const matchesCountry = !filterCountry || customer.country === filterCountry;
+          const matchesStatus = !filterStatus || customer.status === filterStatus;
+          const matchesPriority = !filterPriority || customer.priority === filterPriority;
+          const matchesCustomerType = !filterCustomerType || customer.customerType === filterCustomerType;
+          const matchesSearch = !searchTerm || 
+            customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            customer.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
           
-          // Apply search
-          if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            
-            // Search by name
-            const nameMatch = customer.name.toLowerCase().includes(searchLower);
-            
-            // Search by tags
-            const tagMatch = customer.tags.some(tag => 
-              tag.toLowerCase().includes(searchLower)
-            );
-            
-            // Search by requirements
-            const requirementsMatch = customer.requirements.toLowerCase().includes(searchLower);
-            
-            return nameMatch || tagMatch || requirementsMatch;
-          }
-          
-          return true;
+          return matchesCountry && matchesStatus && matchesPriority && matchesCustomerType && matchesSearch;
         });
       }
     }),

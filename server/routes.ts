@@ -1,20 +1,57 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-// Use storage factory to get the appropriate storage implementation
 import { getStorage } from "./storage-factory";
 import { z } from "zod";
-import { 
-  insertCustomerSchema, 
-  insertNoteSchema,
-  insertEmailLogSchema,
-  insertActivityLogSchema,
-  Customer,
-  Note,
-  EmailLog,
-  ActivityLog
-} from "@shared/schema";
 import { log } from "./vite";
 import { v4 as uuidv4 } from "uuid";
+
+// Define Zod schemas for validation
+const customerSchema = z.object({
+  name: z.string(),
+  contactPerson: z.string(),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  country: z.string(),
+  region: z.string().optional(),
+  city: z.string(),
+  website: z.string().optional(),
+  isReturningCustomer: z.boolean().optional(),
+  customerType: z.enum(['Retailer', 'Distributor', 'Contractor', 'Designer', 'Architect', 'Builder', 'Other']).optional(),
+  requirements: z.string().optional(),
+  status: z.enum(['Lead', 'Email Sent', 'Meeting Scheduled', 'Negotiation', 'Won', 'Lost']).optional(),
+  priority: z.enum(['High', 'Medium', 'Low']).optional(),
+  tags: z.array(z.string()).optional(),
+  valueTier: z.enum(['Premium', 'Standard', 'Basic', '']).optional(),
+  directImport: z.enum(['Yes', 'No', 'Distributor', '']).optional(),
+  lastFollowUpDate: z.string().optional(),
+  nextFollowUpDate: z.string().optional(),
+  lastContactNotes: z.string().optional(),
+  keyMeetingPoints: z.string().optional(),
+  isHotLead: z.boolean().optional(),
+  isPinned: z.boolean().optional()
+});
+
+const noteSchema = z.object({
+  customerId: z.string(),
+  text: z.string(),
+  nextStep: z.string().optional(),
+  isKey: z.boolean().optional(),
+  images: z.array(z.string()).optional()
+});
+
+const emailLogSchema = z.object({
+  customerId: z.string(),
+  subject: z.string(),
+  content: z.string(),
+  sentBy: z.string().optional()
+});
+
+const activityLogSchema = z.object({
+  customerId: z.string(),
+  activity: z.string(),
+  performedBy: z.string().optional(),
+  details: z.string().optional()
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get the appropriate storage implementation (MongoDB or in-memory)
@@ -49,13 +86,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/customers", async (req: Request, res: Response) => {
     try {
-      // Generate a new UUID for the customer
-      const customerId = uuidv4();
-      
       // Validate request body
-      const customerData = insertCustomerSchema.parse({
+      const customerData = customerSchema.parse({
         ...req.body,
-        id: customerId,
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -83,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Validate request body
-      const customerData = insertCustomerSchema.parse({
+      const customerData = customerSchema.parse({
         ...req.body,
         id,
         updatedAt: new Date()
@@ -104,14 +137,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/customers/:id", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const success = await storage.deleteCustomer(id);
       
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(id);
-      if (!existingCustomer) {
+      if (!success) {
         return res.status(404).json({ error: "Customer not found" });
       }
       
-      await storage.deleteCustomer(id);
       res.status(204).send();
     } catch (error) {
       log(`Error deleting customer: ${error}`, "routes");
@@ -119,17 +150,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Notes routes
-  app.get("/api/customers/:customerId/notes", async (req: Request, res: Response) => {
+  app.post("/api/customers/:id/toggle-hot-lead", async (req: Request, res: Response) => {
     try {
-      const { customerId } = req.params;
+      const { id } = req.params;
+      const updatedCustomer = await storage.toggleHotLead(id);
       
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(customerId);
-      if (!existingCustomer) {
+      if (!updatedCustomer) {
         return res.status(404).json({ error: "Customer not found" });
       }
       
+      res.json(updatedCustomer);
+    } catch (error) {
+      log(`Error toggling hot lead: ${error}`, "routes");
+      res.status(500).json({ error: "Failed to toggle hot lead" });
+    }
+  });
+  
+  app.post("/api/customers/:id/toggle-pinned", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updatedCustomer = await storage.togglePinned(id);
+      
+      if (!updatedCustomer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+      
+      res.json(updatedCustomer);
+    } catch (error) {
+      log(`Error toggling pinned: ${error}`, "routes");
+      res.status(500).json({ error: "Failed to toggle pinned" });
+    }
+  });
+  
+  app.get("/api/customers/upcoming-follow-ups/:days", async (req: Request, res: Response) => {
+    try {
+      const { days } = req.params;
+      const customers = await storage.getCustomersWithUpcomingFollowUps(parseInt(days));
+      res.json(customers);
+    } catch (error) {
+      log(`Error getting customers with upcoming follow-ups: ${error}`, "routes");
+      res.status(500).json({ error: "Failed to get customers with upcoming follow-ups" });
+    }
+  });
+  
+  app.get("/api/customers/needing-attention", async (req: Request, res: Response) => {
+    try {
+      const customers = await storage.getCustomersNeedingAttention();
+      res.json(customers);
+    } catch (error) {
+      log(`Error getting customers needing attention: ${error}`, "routes");
+      res.status(500).json({ error: "Failed to get customers needing attention" });
+    }
+  });
+  
+  // Note routes
+  app.get("/api/customers/:customerId/notes", async (req: Request, res: Response) => {
+    try {
+      const { customerId } = req.params;
       const notes = await storage.getNotesForCustomer(customerId);
       res.json(notes);
     } catch (error) {
@@ -138,24 +215,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/customers/:customerId/notes", async (req: Request, res: Response) => {
+  app.get("/api/notes/:id", async (req: Request, res: Response) => {
     try {
-      const { customerId } = req.params;
+      const { id } = req.params;
+      const note = await storage.getNoteById(id);
       
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(customerId);
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
+      if (!note) {
+        return res.status(404).json({ error: "Note not found" });
       }
       
+      res.json(note);
+    } catch (error) {
+      log(`Error getting note: ${error}`, "routes");
+      res.status(500).json({ error: "Failed to get note" });
+    }
+  });
+  
+  app.post("/api/notes", async (req: Request, res: Response) => {
+    try {
       // Generate a new UUID for the note
       const noteId = uuidv4();
       
       // Validate request body
-      const noteData = insertNoteSchema.parse({
+      const noteData = noteSchema.parse({
         ...req.body,
         id: noteId,
-        customerId,
         timestamp: new Date()
       });
       
@@ -171,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.delete("/api/notes/:id", async (req: Request, res: Response) => {
+  app.put("/api/notes/:id", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -181,7 +265,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Note not found" });
       }
       
-      await storage.deleteNote(id);
+      // Validate request body
+      const noteData = noteSchema.parse(req.body);
+      
+      const updatedNote = await storage.updateNote(id, noteData);
+      res.json(updatedNote);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      
+      log(`Error updating note: ${error}`, "routes");
+      res.status(500).json({ error: "Failed to update note" });
+    }
+  });
+  
+  app.delete("/api/notes/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteNote(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Note not found" });
+      }
+      
       res.status(204).send();
     } catch (error) {
       log(`Error deleting note: ${error}`, "routes");
@@ -189,17 +296,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.patch("/api/notes/:id/toggle-key", async (req: Request, res: Response) => {
+  app.post("/api/notes/:id/toggle-key", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const updatedNote = await storage.toggleKeyNote(id);
       
-      // Check if note exists
-      const existingNote = await storage.getNoteById(id);
-      if (!existingNote) {
+      if (!updatedNote) {
         return res.status(404).json({ error: "Note not found" });
       }
       
-      const updatedNote = await storage.toggleKeyNote(id);
       res.json(updatedNote);
     } catch (error) {
       log(`Error toggling key note: ${error}`, "routes");
@@ -207,97 +312,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Customer enhancement routes
-  app.patch("/api/customers/:id/toggle-hot-lead", async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(id);
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
-      
-      const updatedCustomer = await storage.toggleHotLead(id);
-      
-      // Create activity log
-      await storage.createActivityLog({
-        id: uuidv4(),
-        customerId: id,
-        action: updatedCustomer?.isHotLead ? "Hot Lead Added" : "Hot Lead Removed",
-        description: `Customer was ${updatedCustomer?.isHotLead ? "marked as" : "removed from"} Hot Lead`,
-        timestamp: new Date()
-      });
-      
-      res.json(updatedCustomer);
-    } catch (error) {
-      log(`Error toggling hot lead: ${error}`, "routes");
-      res.status(500).json({ error: "Failed to toggle hot lead" });
-    }
-  });
-  
-  app.patch("/api/customers/:id/toggle-pinned", async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(id);
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
-      
-      const updatedCustomer = await storage.togglePinned(id);
-      
-      // Create activity log
-      await storage.createActivityLog({
-        id: uuidv4(),
-        customerId: id,
-        action: updatedCustomer?.isPinned ? "Customer Pinned" : "Customer Unpinned",
-        description: `Customer was ${updatedCustomer?.isPinned ? "pinned" : "unpinned"}`,
-        timestamp: new Date()
-      });
-      
-      res.json(updatedCustomer);
-    } catch (error) {
-      log(`Error toggling pinned status: ${error}`, "routes");
-      res.status(500).json({ error: "Failed to toggle pinned status" });
-    }
-  });
-  
-  // Follow-up calendar routes
-  app.get("/api/follow-ups", async (req: Request, res: Response) => {
-    try {
-      const days = parseInt(req.query.days as string) || 7;
-      const customers = await storage.getCustomersWithUpcomingFollowUps(days);
-      res.json(customers);
-    } catch (error) {
-      log(`Error getting follow-ups: ${error}`, "routes");
-      res.status(500).json({ error: "Failed to get follow-ups" });
-    }
-  });
-  
-  // Smart attention routes
-  app.get("/api/customers/needs-attention", async (req: Request, res: Response) => {
-    try {
-      const customers = await storage.getCustomersNeedingAttention();
-      res.json(customers);
-    } catch (error) {
-      log(`Error getting customers needing attention: ${error}`, "routes");
-      res.status(500).json({ error: "Failed to get customers needing attention" });
-    }
-  });
-  
   // Email log routes
   app.get("/api/customers/:customerId/email-logs", async (req: Request, res: Response) => {
     try {
       const { customerId } = req.params;
-      
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(customerId);
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
-      
       const emailLogs = await storage.getEmailLogsForCustomer(customerId);
       res.json(emailLogs);
     } catch (error) {
@@ -306,38 +324,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/customers/:customerId/email-logs", async (req: Request, res: Response) => {
+  app.post("/api/email-logs", async (req: Request, res: Response) => {
     try {
-      const { customerId } = req.params;
-      
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(customerId);
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
-      
       // Generate a new UUID for the email log
       const emailLogId = uuidv4();
       
       // Validate request body
-      const emailLogData = insertEmailLogSchema.parse({
+      const emailLogData = emailLogSchema.parse({
         ...req.body,
         id: emailLogId,
-        customerId,
         date: new Date()
       });
       
       const newEmailLog = await storage.createEmailLog(emailLogData);
-      
-      // Create activity log
-      await storage.createActivityLog({
-        id: uuidv4(),
-        customerId,
-        action: "Email Logged",
-        description: `Email "${emailLogData.subject}" was logged`,
-        timestamp: new Date()
-      });
-      
       res.status(201).json(newEmailLog);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -349,10 +348,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.delete("/api/email-logs/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteEmailLog(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Email log not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      log(`Error deleting email log: ${error}`, "routes");
+      res.status(500).json({ error: "Failed to delete email log" });
+    }
+  });
+  
   // Activity log routes
   app.get("/api/activity-logs", async (req: Request, res: Response) => {
     try {
-      const limit = parseInt(req.query.limit as string) || undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
       const activityLogs = await storage.getAllActivityLogs(limit);
       res.json(activityLogs);
     } catch (error) {
@@ -364,13 +379,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customers/:customerId/activity-logs", async (req: Request, res: Response) => {
     try {
       const { customerId } = req.params;
-      
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(customerId);
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
-      
       const activityLogs = await storage.getActivityLogsForCustomer(customerId);
       res.json(activityLogs);
     } catch (error) {
@@ -378,7 +386,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to get activity logs" });
     }
   });
-
-  const httpServer = createServer(app);
-  return httpServer;
+  
+  app.post("/api/activity-logs", async (req: Request, res: Response) => {
+    try {
+      // Generate a new UUID for the activity log
+      const activityLogId = uuidv4();
+      
+      // Validate request body
+      const activityLogData = activityLogSchema.parse({
+        ...req.body,
+        id: activityLogId,
+        timestamp: new Date()
+      });
+      
+      const newActivityLog = await storage.createActivityLog(activityLogData);
+      res.status(201).json(newActivityLog);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      
+      log(`Error creating activity log: ${error}`, "routes");
+      res.status(500).json({ error: "Failed to create activity log" });
+    }
+  });
+  
+  const server = createServer(app);
+  return server;
 }

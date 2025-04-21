@@ -45,6 +45,7 @@ export interface Customer {
   keyMeetingPoints: string;
   isHotLead: boolean;
   isPinned: boolean;
+  notes: Note[];
 }
 
 export interface Note {

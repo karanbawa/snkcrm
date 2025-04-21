@@ -4,15 +4,28 @@ import { log } from './vite';
 // MongoDB connection URL - default to localhost for development
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/snk_customer_db';
 
+// Connection options for MongoDB
+// Note: directConnection is not supported with SRV URIs
+const isSrvUri = process.env.MONGODB_URI && process.env.MONGODB_URI.startsWith('mongodb+srv://');
+
 export async function connectToMongoDB() {
   try {
+    // Log connection attempt (redact sensitive information)
     log(`Attempting to connect to MongoDB with URI: ${MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')}`, 'mongo');
     
-    // Set a timeout for the connection attempt
-    const connectPromise = mongoose.connect(MONGODB_URI, {
+    // Set connection options based on type of URI
+    const connectOptions: any = {
       serverSelectionTimeoutMS: 10000, // 10 seconds timeout
       connectTimeoutMS: 10000
-    });
+    };
+    
+    // For SRV URIs, we shouldn't add the directConnection option
+    if (!isSrvUri) {
+      connectOptions.directConnection = true;
+    }
+    
+    // Connect with appropriate options
+    const connectPromise = mongoose.connect(MONGODB_URI, connectOptions);
     
     await connectPromise;
     log('Successfully connected to MongoDB', 'mongo');

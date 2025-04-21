@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+// Use storage factory to get the appropriate storage implementation
+import { getStorage } from "./storage-factory";
 import { z } from "zod";
 import { 
   insertCustomerSchema, 
@@ -16,6 +17,9 @@ import { log } from "./vite";
 import { v4 as uuidv4 } from "uuid";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Get the appropriate storage implementation (MongoDB or in-memory)
+  const storage = getStorage();
+  
   // Customer routes
   app.get("/api/customers", async (req: Request, res: Response) => {
     try {

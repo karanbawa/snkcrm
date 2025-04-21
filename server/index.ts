@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { connectToMongoDB } from "./mongo";
+import { setMongoConnectionStatus } from "./storage-factory";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +39,18 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  try {
+    // Connect to MongoDB
+    const mongoConnection = await connectToMongoDB();
+    const isConnected = mongoConnection !== null;
+    setMongoConnectionStatus(isConnected);
+    log(`MongoDB connection status: ${isConnected ? 'Connected' : 'Failed'}`, 'server');
+  } catch (error) {
+    log(`Error in MongoDB connection setup: ${error}`, 'server');
+    setMongoConnectionStatus(false);
+    log('Falling back to in-memory storage', 'server');
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

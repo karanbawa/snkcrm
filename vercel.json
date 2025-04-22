@@ -6,8 +6,11 @@
       "use": "@vercel/node"
     },
     {
-      "src": "client/**",
-      "use": "@vercel/static"
+      "src": "client/index.html",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist/public"
+      }
     }
   ],
   "routes": [
@@ -17,7 +20,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "client/$1"
+      "dest": "/dist/public/index.html"
     }
   ]
 }

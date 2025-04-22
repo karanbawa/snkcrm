@@ -1,7 +1,8 @@
-import express from 'express';
+import { Router } from 'express';
+import { getStorage } from '../storage-mongo.js';
 import { Customer, CustomerStorage } from '../storage-mongo';
 
-const router = express.Router();
+const router = Router();
 
 // Create a new customer
 router.post('/', async (req, res) => {

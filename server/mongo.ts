@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { log } from './vite';
+import { log } from './vite.js';
 import 'dotenv/config';
 
 // MongoDB connection URL from environment variable

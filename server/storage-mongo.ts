@@ -4,6 +4,16 @@ import mongoose from 'mongoose';
 import { log } from './vite.js';
 import { MongoClient, ObjectId, Db, Collection } from 'mongodb';
 
+interface NoteType {
+  id?: string;
+  customerId: string;
+  text: string;
+  timestamp?: Date;
+  nextStep?: string;
+  isKey?: boolean;
+  images?: string[];
+}
+
 // Storage implementation for MongoDB
 export class MongoStorage implements IStorage {
   private client: MongoClient | null = null;
@@ -190,7 +200,7 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  async createNote(note: Note): Promise<Note> {
+  async createNote(note: NoteType): Promise<NoteType> {
     try {
       const { id, ...noteData } = note;
       

@@ -1,4 +1,4 @@
-import { IStorage } from './storage.js';
+import { IStorage } from './storage-interface.js';
 import { storage as memStorage } from './storage.js';
 import { mongoStorage } from './storage-mongo.js';
 import { log } from './vite.js';

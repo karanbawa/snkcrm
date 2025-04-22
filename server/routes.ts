@@ -1,8 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { getStorage } from "./storage-factory";
+import { getStorage } from "./storage-factory.js";
 import { z } from "zod";
-import { log } from "./vite";
+import { log } from "./vite.js";
 import { v4 as uuidv4 } from "uuid";
 
 // Define Zod schemas for validation

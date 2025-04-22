@@ -4,10 +4,6 @@
     {
       "src": "package.json",
       "use": "@vercel/node"
-    },
-    {
-      "src": "client/**/*.tsx",
-      "use": "@vercel/next"
     }
   ],
   "routes": [
@@ -17,7 +13,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/client/index.html"
+      "dest": "/server/index.ts"
     }
   ]
 }

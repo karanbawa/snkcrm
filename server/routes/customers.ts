@@ -1,14 +1,15 @@
 import { Router } from 'express';
-import { getStorage } from '../storage-mongo.js';
-import { Customer, CustomerStorage } from '../storage-mongo';
+import { getStorage } from '../storage-factory.js';
+import { Customer, IStorage } from '../storage-interface.js';
 
 const router = Router();
+const storage: IStorage = getStorage();
 
 // Create a new customer
 router.post('/', async (req, res) => {
   try {
     const customerData = req.body;
-    const customer = await CustomerStorage.createCustomer(customerData);
+    const customer = await storage.createCustomer(customerData);
     res.status(201).json(customer);
   } catch (error) {
     console.error('Error creating customer:', error);
@@ -19,7 +20,7 @@ router.post('/', async (req, res) => {
 // Get all customers
 router.get('/', async (req, res) => {
   try {
-    const customers = await CustomerStorage.getCustomers();
+    const customers = await storage.getCustomers();
     res.json(customers);
   } catch (error) {
     console.error('Error getting customers:', error);
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
 // Get a single customer by ID
 router.get('/:id', async (req, res) => {
   try {
-    const customer = await CustomerStorage.getCustomerById(req.params.id);
+    const customer = await storage.getCustomerById(req.params.id);
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
     }
@@ -44,7 +45,7 @@ router.get('/:id', async (req, res) => {
 // Update a customer
 router.put('/:id', async (req, res) => {
   try {
-    const customer = await CustomerStorage.updateCustomer(req.params.id, req.body);
+    const customer = await storage.updateCustomer(req.params.id, req.body);
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
     }
@@ -58,7 +59,7 @@ router.put('/:id', async (req, res) => {
 // Delete a customer
 router.delete('/:id', async (req, res) => {
   try {
-    const success = await CustomerStorage.deleteCustomer(req.params.id);
+    const success = await storage.deleteCustomer(req.params.id);
     if (!success) {
       return res.status(404).json({ error: 'Customer not found' });
     }

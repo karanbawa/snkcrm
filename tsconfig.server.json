@@ -4,9 +4,9 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "dist/server",
-    "rootDir": "server",
+    "rootDir": ".",
     "target": "ES2020"
   },
-  "include": ["server/**/*.ts"],
+  "include": ["server/**/*.ts", "vite.config.ts"],
   "exclude": ["node_modules", "client"]
 } 

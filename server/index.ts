@@ -14,7 +14,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Serve static files from the dist/public directory
-app.use(express.static(path.join(__dirname, "../dist/public")));
+app.use(express.static(path.join(__dirname, "../dist/public"), {
+  index: false,
+  extensions: ['html', 'js', 'css', 'png', 'jpg', 'jpeg', 'gif', 'svg']
+}));
 
 // API routes middleware
 app.use((req, res, next) => {

@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 // Serve static files from the dist/public directory
 app.use(express.static(path.join(__dirname, "../dist/public")));
 
+// API routes middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -46,9 +47,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Register API routes
+app.use("/api", (req, res, next) => {
+  registerRoutes(app).then(() => next()).catch(next);
+});
+
 // Handle all other routes by serving index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../dist/public/index.html"));
+});
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  log(`Error: ${err.message}`, 'server');
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 (async () => {
@@ -58,9 +70,6 @@ app.get("*", (req, res) => {
     const isConnected = mongoConnection !== null;
     setMongoConnectionStatus(isConnected);
     log(`MongoDB connection status: ${isConnected ? 'Connected' : 'Failed'}`, 'server');
-    
-    // Register API routes
-    await registerRoutes(app);
     
     // Start the server
     const port = process.env.PORT || 3000;

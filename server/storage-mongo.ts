@@ -1,12 +1,112 @@
-import { IStorage } from './storage';
-import { Customer, Note, EmailLog, ActivityLog, User, toMongoId } from './mongo';
+import { IStorage, Customer as CustomerType } from './storage-interface.js';
+import { Customer, Note, EmailLog, ActivityLog, User, toMongoId } from './mongo.js';
 import mongoose from 'mongoose';
-import { log } from './vite';
+import { log } from './vite.js';
 import { MongoClient, ObjectId, Db, Collection } from 'mongodb';
-import { IStorage as IStorageInterface, Customer as CustomerType } from './storage-interface';
 
 // Storage implementation for MongoDB
 export class MongoStorage implements IStorage {
+  private client: MongoClient | null = null;
+  private db: Db | null = null;
+  private customersCollection: Collection | null = null;
+  private usersCollection: Collection | null = null;
+  private notesCollection: Collection | null = null;
+  private emailLogsCollection: Collection | null = null;
+  private activityLogsCollection: Collection | null = null;
+
+  async connect(uri: string): Promise<void> {
+    this.client = new MongoClient(uri);
+    await this.client.connect();
+    this.db = this.client.db();
+    this.customersCollection = this.db.collection('customers');
+    this.usersCollection = this.db.collection('users');
+    this.notesCollection = this.db.collection('notes');
+    this.emailLogsCollection = this.db.collection('emailLogs');
+    this.activityLogsCollection = this.db.collection('activityLogs');
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.client) {
+      await this.client.close();
+      this.client = null;
+      this.db = null;
+      this.customersCollection = null;
+      this.usersCollection = null;
+      this.notesCollection = null;
+      this.emailLogsCollection = null;
+      this.activityLogsCollection = null;
+    }
+  }
+
+  async createCustomer(customerData: Omit<CustomerType, '_id'>): Promise<CustomerType> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    const result = await this.customersCollection.insertOne({
+      ...customerData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    return {
+      ...customerData,
+      _id: result.insertedId.toString(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+
+  async getCustomers(): Promise<CustomerType[]> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    const customers = await this.customersCollection.find().toArray();
+    return customers.map(customer => ({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone || '',
+      address: customer.address || '',
+      _id: customer._id.toString(),
+      createdAt: customer.createdAt,
+      updatedAt: customer.updatedAt
+    }));
+  }
+
+  async getCustomerById(id: string): Promise<CustomerType | null> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    const customer = await this.customersCollection.findOne({ _id: new ObjectId(id) });
+    if (!customer) return null;
+    return {
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone || '',
+      address: customer.address || '',
+      _id: customer._id.toString(),
+      createdAt: customer.createdAt,
+      updatedAt: customer.updatedAt
+    };
+  }
+
+  async updateCustomer(id: string, updateData: Partial<CustomerType>): Promise<CustomerType | null> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    const result = await this.customersCollection.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { ...updateData, updatedAt: new Date() } },
+      { returnDocument: 'after' }
+    );
+    if (!result) return null;
+    return {
+      name: result.name,
+      email: result.email,
+      phone: result.phone || '',
+      address: result.address || '',
+      _id: result._id.toString(),
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt
+    };
+  }
+
+  async deleteCustomer(id: string): Promise<boolean> {
+    if (!this.customersCollection) throw new Error('Not connected to database');
+    const result = await this.customersCollection.deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount > 0;
+  }
+
   // User operations
   async getUser(id: number): Promise<any | undefined> {
     try {
@@ -63,58 +163,6 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  async createCustomer(customer: any): Promise<any> {
-    try {
-      const newCustomer = new Customer({
-        ...customer,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-      
-      const savedCustomer = await newCustomer.save();
-      return this.transformCustomer(savedCustomer);
-    } catch (error) {
-      log(`Error creating customer: ${error}`, 'mongo-storage');
-      throw error;
-    }
-  }
-
-  async updateCustomer(id: string, customer: any): Promise<any | undefined> {
-    try {
-      const mongoId = toMongoId(id);
-      if (!mongoId) return undefined;
-      
-      const updatedCustomer = await Customer.findByIdAndUpdate(
-        mongoId,
-        { ...customer, updatedAt: new Date() },
-        { new: true }
-      );
-      
-      return updatedCustomer ? this.transformCustomer(updatedCustomer) : undefined;
-    } catch (error) {
-      log(`Error updating customer: ${error}`, 'mongo-storage');
-      return undefined;
-    }
-  }
-
-  async deleteCustomer(id: string): Promise<boolean> {
-    try {
-      const mongoId = toMongoId(id);
-      if (!mongoId) return false;
-      
-      // Delete customer and related data
-      await Customer.findByIdAndDelete(mongoId);
-      await Note.deleteMany({ customerId: mongoId });
-      await EmailLog.deleteMany({ customerId: mongoId });
-      await ActivityLog.deleteMany({ customerId: mongoId });
-      
-      return true;
-    } catch (error) {
-      log(`Error deleting customer: ${error}`, 'mongo-storage');
-      return false;
-    }
-  }
-
   // Note operations
   async getNotesForCustomer(customerId: string): Promise<any[]> {
     try {
@@ -142,7 +190,7 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  async createNote(note: any): Promise<any> {
+  async createNote(note: Note): Promise<Note> {
     try {
       const { id, ...noteData } = note;
       

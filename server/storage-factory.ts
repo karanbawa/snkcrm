@@ -1,7 +1,7 @@
-import { IStorage } from './storage';
-import { storage as memStorage } from './storage';
-import { mongoStorage } from './storage-mongo';
-import { log } from './vite';
+import { IStorage } from './storage.js';
+import { storage as memStorage } from './storage.js';
+import { mongoStorage } from './storage-mongo.js';
+import { log } from './vite.js';
 
 // Flag to indicate if MongoDB connection was successful
 let isMongoConnected = false;

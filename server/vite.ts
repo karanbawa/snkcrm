@@ -65,21 +65,46 @@ export async function setupVite(app: Express, server: Server) {
       next(e);
     }
   });
+
+  // Add MIME type handling
+  app.use((req, res, next) => {
+    if (req.url.endsWith('.js')) {
+      res.type('application/javascript');
+    } else if (req.url.endsWith('.css')) {
+      res.type('text/css');
+    } else if (req.url.endsWith('.html')) {
+      res.type('text/html');
+    }
+    next();
+  });
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const distPath = path.resolve(import.meta.dirname, "..", "dist/public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
 
-  app.use(express.static(distPath));
+  // Serve static files with proper MIME types
+  app.use(express.static(distPath, {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      }
+    }
+  }));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  // Serve index.html for all routes except /api
+  app.use('*', (req, res, next) => {
+    if (req.baseUrl.startsWith('/api')) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
   });
 }

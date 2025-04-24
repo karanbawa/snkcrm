@@ -62,25 +62,41 @@ app.get("*", (req, res) => {
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error('Server Error:', err);
   log(`Error: ${err.message}`, 'server');
-  res.status(500).json({ error: 'Internal Server Error' });
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'An error occurred'
+  });
 });
 
-(async () => {
+// Initialize MongoDB connection
+let mongoConnection = null;
+let isConnecting = false;
+
+async function initializeMongoDB() {
+  if (isConnecting) return;
+  isConnecting = true;
+  
   try {
-    // Connect to MongoDB
-    const mongoConnection = await connectToMongoDB();
+    mongoConnection = await connectToMongoDB();
     const isConnected = mongoConnection !== null;
     setMongoConnectionStatus(isConnected);
     log(`MongoDB connection status: ${isConnected ? 'Connected' : 'Failed'}`, 'server');
-    
-    // Start the server
-    const port = process.env.PORT || 3000;
-    app.listen(port, () => {
-      log(`Server is running on port ${port}`, 'server');
-    });
   } catch (error) {
-    log(`Error in server setup: ${error}`, 'server');
+    console.error('MongoDB Connection Error:', error);
+    log(`Error in MongoDB setup: ${error}`, 'server');
     setMongoConnectionStatus(false);
+  } finally {
+    isConnecting = false;
   }
-})();
+}
+
+// Start the server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  log(`Server is running on port ${port}`, 'server');
+  initializeMongoDB();
+});
+
+export default app;

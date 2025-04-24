@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-// import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
-// import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -13,8 +13,8 @@ export default defineConfig({
   root: "client",
   plugins: [
     react(),
-    // runtimeErrorOverlay(),
-    // themePlugin()
+    runtimeErrorOverlay(),
+    themePlugin()
   ],
   resolve: {
     alias: {

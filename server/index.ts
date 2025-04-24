@@ -1,4 +1,3 @@
-// server/index.ts
 import express, { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
@@ -7,9 +6,11 @@ import { setMongoConnectionStatus } from "./storage-factory.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// Fix for __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Initialize Express app
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -52,10 +53,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Register API routes once
+// Register API routes
 await registerRoutes(app);
 
-// All remaining routes -> index.html
+// All remaining routes -> index.html (for client-side routing)
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../dist/public/index.html"));
 });
@@ -74,25 +75,27 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// MongoDB connection initialization
-async function initializeMongoDB() {
+// MongoDB connection + Server Start
+async function initializeMongoDBAndStartServer() {
   try {
     const mongoConnection = await connectToMongoDB();
     const isConnected = mongoConnection !== null;
     setMongoConnectionStatus(isConnected);
     log(`MongoDB connection status: ${isConnected ? "Connected" : "Failed"}`, "server");
+
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+      log(`✅ Server is running on port ${port}`, "server");
+    });
   } catch (error) {
-    console.error("MongoDB Connection Error:", error);
-    log(`Error in MongoDB setup: ${error}`, "server");
+    console.error("❌ MongoDB Connection Error:", error);
+    log(`❌ Error in MongoDB setup: ${error}`, "server");
     setMongoConnectionStatus(false);
+    process.exit(1); // Exit if DB connection fails
   }
 }
 
-// Start the server
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  log(`✅ Server is running on port ${port}`, "server");
-  initializeMongoDB();
-});
+// Start everything
+initializeMongoDBAndStartServer();
 
 export default app;

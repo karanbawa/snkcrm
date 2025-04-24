@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx server/index.ts",
-    "build": "rm -rf dist && vite build && tsc --project tsconfig.server.json",
+    "clean": "rm -rf dist",
+    "build": "rm -rf dist && vite build",
     "start": "node dist/server/index.js",
-    "netlify-build": "vite build",
-    "vercel-build": "npm run build"
+    "vercel-build": "npm run build && tsc --project tsconfig.server.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

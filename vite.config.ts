@@ -4,17 +4,12 @@ import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-export default defineConfig(async () => ({
+export default defineConfig({
   root: "client",
   plugins: [
     react(),
     runtimeErrorOverlay(),
-    themePlugin(),
-    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
-      ? [
-          (await import("@replit/vite-plugin-cartographer")).cartographer()
-        ]
-      : []),
+    themePlugin()
   ],
   resolve: {
     alias: {
@@ -25,8 +20,9 @@ export default defineConfig(async () => ({
   },
   base: "/",
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    outDir: "../dist/public",
     emptyOutDir: true,
+    sourcemap: true,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, "client/index.html"),
@@ -41,4 +37,4 @@ export default defineConfig(async () => ({
   server: {
     port: 3000,
   },
-}));
+});

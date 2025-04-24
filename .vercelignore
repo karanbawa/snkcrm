@@ -1,0 +1,13 @@
+node_modules
+package-lock.json
+.vscode
+.env
+.env.local
+.DS_Store
+*.log
+*.tsbuildinfo
+*.swp
+.cache
+dist
+coverage
+.vercel/output

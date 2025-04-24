@@ -5,7 +5,8 @@
       "src": "server/index.ts",
       "use": "@vercel/node",
       "config": {
-        "nodeVersion": "22.x"
+        "nodeVersion": "22.x",
+        "maxLambdaSize": "50mb"
       }
     },
     {

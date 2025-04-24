@@ -6,22 +6,29 @@ import 'dotenv/config';
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error('MONGODB_URI environment variable is not set');
+  console.error('MONGODB_URI environment variable is not set');
+  // Don't throw error, just log it
 }
 
 // Connection options for MongoDB
-const isSrvUri = MONGODB_URI.startsWith('mongodb+srv://');
-const mongoUri = MONGODB_URI; // Create a constant after the check
+const isSrvUri = MONGODB_URI?.startsWith('mongodb+srv://') || false;
+const mongoUri = MONGODB_URI || '';
 
 export async function connectToMongoDB() {
   try {
+    if (!MONGODB_URI) {
+      throw new Error('MongoDB URI is not configured');
+    }
+
     // Log connection attempt (redact sensitive information)
     log(`Attempting to connect to MongoDB with URI: ${mongoUri.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')}`, 'mongo');
     
     // Set connection options based on type of URI
     const connectOptions: any = {
       serverSelectionTimeoutMS: 10000, // 10 seconds timeout
-      connectTimeoutMS: 10000
+      connectTimeoutMS: 10000,
+      retryWrites: true,
+      w: 'majority'
     };
     
     // For SRV URIs, we shouldn't add the directConnection option
@@ -30,14 +37,13 @@ export async function connectToMongoDB() {
     }
     
     // Connect with appropriate options
-    const connectPromise = mongoose.connect(mongoUri, connectOptions);
-    
-    await connectPromise;
+    await mongoose.connect(mongoUri, connectOptions);
     log('Successfully connected to MongoDB', 'mongo');
     return mongoose.connection;
   } catch (error) {
+    console.error('MongoDB Connection Error:', error);
     log(`Error connecting to MongoDB: ${error}`, 'mongo');
-    throw error; // Let the application handle the error
+    throw error;
   }
 }
 

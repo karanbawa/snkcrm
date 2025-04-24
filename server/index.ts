@@ -1,4 +1,5 @@
-import express, { type Request, Response, NextFunction } from "express";
+// server/index.ts
+import express, { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 import { connectToMongoDB } from "./mongo.js";
@@ -13,89 +14,84 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve static files from the dist/public directory
-app.use(express.static(path.join(__dirname, "../dist/public"), {
-  index: false,
-  extensions: ['html', 'js', 'css', 'png', 'jpg', 'jpeg', 'gif', 'svg']
-}));
+// Serve static files from dist/public
+app.use(
+  express.static(path.join(__dirname, "../dist/public"), {
+    index: false,
+    extensions: ["html", "js", "css", "png", "jpg", "jpeg", "gif", "svg"],
+  })
+);
 
-// API routes middleware
-app.use((req, res, next) => {
+// Custom logger for API responses
+app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  const reqPath = req.path;
+  let capturedJson: any = undefined;
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
+  const originalJson = res.json.bind(res);
+  res.json = (body, ...args) => {
+    capturedJson = body;
+    return originalJson(body, ...args);
   };
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
 
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+    if (reqPath.startsWith("/api")) {
+      let logLine = `${req.method} ${reqPath} ${res.statusCode} in ${duration}ms`;
+      if (capturedJson) {
+        logLine += ` :: ${JSON.stringify(capturedJson)}`;
       }
-
-      log(logLine);
+      if (logLine.length > 120) {
+        logLine = logLine.slice(0, 119) + "…";
+      }
+      log(logLine, "server");
     }
   });
 
   next();
 });
 
-// Register API routes
-app.use("/api", (req, res, next) => {
-  registerRoutes(app).then(() => next()).catch(next);
-});
+// Register API routes once
+await registerRoutes(app);
 
-// Handle all other routes by serving index.html
+// All remaining routes -> index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../dist/public/index.html"));
 });
 
-// Error handling middleware
+// Global error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Server Error:', err);
-  log(`Error: ${err.message}`, 'server');
-  res.status(500).json({ 
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'An error occurred'
+  console.error("Server Error:", err);
+  log(`Error: ${err.message}`, "server");
+
+  res.status(500).json({
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "An error occurred",
   });
 });
 
-// Initialize MongoDB connection
-let mongoConnection = null;
-let isConnecting = false;
-
+// MongoDB connection initialization
 async function initializeMongoDB() {
-  if (isConnecting) return;
-  isConnecting = true;
-  
   try {
-    mongoConnection = await connectToMongoDB();
+    const mongoConnection = await connectToMongoDB();
     const isConnected = mongoConnection !== null;
     setMongoConnectionStatus(isConnected);
-    log(`MongoDB connection status: ${isConnected ? 'Connected' : 'Failed'}`, 'server');
+    log(`MongoDB connection status: ${isConnected ? "Connected" : "Failed"}`, "server");
   } catch (error) {
-    console.error('MongoDB Connection Error:', error);
-    log(`Error in MongoDB setup: ${error}`, 'server');
+    console.error("MongoDB Connection Error:", error);
+    log(`Error in MongoDB setup: ${error}`, "server");
     setMongoConnectionStatus(false);
-  } finally {
-    isConnecting = false;
   }
 }
 
 // Start the server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  log(`Server is running on port ${port}`, 'server');
+  log(`✅ Server is running on port ${port}`, "server");
   initializeMongoDB();
 });
 

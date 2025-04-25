@@ -28,7 +28,11 @@ const customerSchema = z.object({
   lastContactNotes: z.string().optional(),
   keyMeetingPoints: z.string().optional(),
   isHotLead: z.boolean().optional(),
-  isPinned: z.boolean().optional()
+  isPinned: z.boolean().optional(),
+
+  // ✅ Add these:
+  createdAt: z.date(),
+  updatedAt: z.date()
 });
 
 const noteSchema = z.object({

@@ -24,12 +24,12 @@
       "dest": "/server/index.ts"
     },
     {
-      "handle": "filesystem"
+      "src": "/assets/(.*)",
+      "dest": "/dist/public/assets/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/public/index.html",
-      "continue": true
+      "dest": "/dist/public/index.html"
     }
   ]
 }

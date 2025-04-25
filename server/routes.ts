@@ -88,11 +88,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/customers", async (req: Request, res: Response) => {
     try {
+      const now = new Date();
       // Validate request body
       const customerData = customerSchema.parse({
         ...req.body,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString()
       });
       
       const newCustomer = await storage.createCustomer(customerData);
@@ -121,6 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customerData = customerSchema.parse({
         ...req.body,
         id,
+        // createdAt: existingCustomer.createdAt,
         updatedAt: new Date().toISOString()
       });
       

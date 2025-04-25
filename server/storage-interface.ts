@@ -41,7 +41,7 @@ export interface IStorage {
 }
 
 export interface Customer {
-  _id: string;
+  _id?: string;
   name: string;
   contactPerson: string;
   email: string;
@@ -64,6 +64,6 @@ export interface Customer {
   keyMeetingPoints?: string;
   isHotLead?: boolean;
   isPinned?: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 } 

@@ -29,10 +29,8 @@ const customerSchema = z.object({
   keyMeetingPoints: z.string().optional(),
   isHotLead: z.boolean().optional(),
   isPinned: z.boolean().optional(),
-
-  // ✅ Add these:
-  createdAt: z.date(),
-  updatedAt: z.date()
+  createdAt: z.union([z.date(), z.string()]).optional(),
+  updatedAt: z.union([z.date(), z.string()]).optional()
 });
 
 const noteSchema = z.object({
@@ -123,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customerData = customerSchema.parse({
         ...req.body,
         id,
-        updatedAt: new Date()
+        updatedAt: new Date().toISOString()
       });
       
       const updatedCustomer = await storage.updateCustomer(id, customerData);

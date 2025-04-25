@@ -110,15 +110,16 @@ export class MongoStorage implements IStorage {
       { returnDocument: 'after' }
     );
     if (!result) return null;
-    return {
-      name: result.name,
-      email: result.email,
-      phone: result.phone || '',
-      // address: result.address || '',
-      _id: result._id.toString(),
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt
-    };
+    return this.transformCustomer(result);
+    // return {
+    //   name: result.name,
+    //   email: result.email,
+    //   phone: result.phone || '',
+    //   // address: result.address || '',
+    //   _id: result._id.toString(),
+    //   createdAt: result.createdAt,
+    //   updatedAt: result.updatedAt
+    // };
   }
 
   async deleteCustomer(id: string): Promise<boolean> {
@@ -578,17 +579,35 @@ export class CustomerStorage implements IStorage {
     }
   }
 
-  private toCustomer(doc: any): CustomerType {
+  private toCustomer(customer: any): CustomerType {
     return {
-      _id: doc._id.toString(),
-      name: doc.name,
-      email: doc.email,
-      phone: doc.phone,
-      // address: doc.address,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt
+      _id: customer._id.toString(),
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone || '',
+      contactPerson: customer.contactPerson || '',
+      country: customer.country || '',
+      region: customer.region || '',
+      city: customer.city || '',
+      website: customer.website || '',
+      isReturningCustomer: customer.isReturningCustomer || false,
+      customerType: customer.customerType || 'Other',
+      requirements: customer.requirements || '',
+      status: customer.status || 'Lead',
+      priority: customer.priority || 'Medium',
+      tags: customer.tags || [],
+      valueTier: customer.valueTier || 'Standard',
+      directImport: customer.directImport || 'No',
+      lastFollowUpDate: customer.lastFollowUpDate || '',
+      nextFollowUpDate: customer.nextFollowUpDate || '',
+      lastContactNotes: customer.lastContactNotes || '',
+      keyMeetingPoints: customer.keyMeetingPoints || '',
+      isHotLead: customer.isHotLead || false,
+      isPinned: customer.isPinned || false,
+      createdAt: customer.createdAt,
+      updatedAt: customer.updatedAt
     };
-  }
+  }  
 
   async createCustomer(customerData: Omit<CustomerType, '_id'>): Promise<CustomerType> {
     if (!this.customersCollection) throw new Error('Not connected to database');

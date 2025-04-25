@@ -47,6 +47,7 @@ export default function AddNoteModal({ customerId, isOpen, onClose }: AddNoteMod
     
     // Create the note without ID and timestamp (server will generate these)
     const newNote = {
+      customerId,
       text: noteText,
       nextStep: nextStep || '',
       isKey,

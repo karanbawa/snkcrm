@@ -7,52 +7,39 @@ import { v4 as uuidv4 } from "uuid";
 
 // Define Zod schemas for validation
 const customerSchema = z.object({
+  id: z.string().optional(),
   name: z.string(),
-  contactPerson: z.string(),
   email: z.string().email(),
-  phone: z.string().optional(),
-  country: z.string(),
-  region: z.string().optional(),
-  city: z.string(),
-  website: z.string().optional(),
-  isReturningCustomer: z.boolean().optional(),
-  customerType: z.enum(['Retailer', 'Distributor', 'Contractor', 'Designer', 'Architect', 'Builder', 'Other']).optional(),
-  requirements: z.string().optional(),
-  status: z.enum(['Lead', 'Email Sent', 'Meeting Scheduled', 'Negotiation', 'Won', 'Lost']).optional(),
-  priority: z.enum(['High', 'Medium', 'Low']).optional(),
-  tags: z.array(z.string()).optional(),
-  valueTier: z.enum(['Premium', 'Standard', 'Basic', '']).optional(),
-  directImport: z.enum(['Yes', 'No', 'Distributor', '']).optional(),
-  lastFollowUpDate: z.string().optional(),
-  nextFollowUpDate: z.string().optional(),
-  lastContactNotes: z.string().optional(),
-  keyMeetingPoints: z.string().optional(),
-  isHotLead: z.boolean().optional(),
-  isPinned: z.boolean().optional(),
-  createdAt: z.union([z.date(), z.string()]).optional(),
-  updatedAt: z.union([z.date(), z.string()]).optional()
+  phone: z.string(),
+  address: z.string(),
+  notes: z.string(),
+  status: z.enum(["active", "inactive"]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 const noteSchema = z.object({
+  id: z.string().optional(),
   customerId: z.string(),
   text: z.string(),
-  nextStep: z.string().optional(),
-  isKey: z.boolean().optional(),
-  images: z.array(z.string()).optional()
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 const emailLogSchema = z.object({
+  id: z.string().optional(),
   customerId: z.string(),
   subject: z.string(),
   content: z.string(),
-  sentBy: z.string().optional()
+  sentAt: z.string().optional(),
 });
 
 const activityLogSchema = z.object({
+  id: z.string().optional(),
   customerId: z.string(),
-  activity: z.string(),
-  performedBy: z.string().optional(),
-  details: z.string().optional()
+  type: z.enum(["note_added", "email_sent", "status_changed"]),
+  description: z.string(),
+  createdAt: z.string().optional(),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -88,52 +75,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/customers", async (req: Request, res: Response) => {
     try {
-      const now = new Date();
-      // Validate request body
-      const customerData = customerSchema.parse({
-        ...req.body,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString()
-      });
-      
-      const newCustomer = await storage.createCustomer(customerData);
+      const validatedData = customerSchema.parse(req.body);
+      const newCustomer = await storage.createCustomer(validatedData);
       res.status(201).json(newCustomer);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
-      
-      log(`Error creating customer: ${error}`, "routes");
+      log(`Error creating customer: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to create customer" });
     }
   });
   
-  app.put("/api/customers/:id", async (req: Request, res: Response) => {
+  app.put("/api/customers/:customerId", async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      
-      // Check if customer exists
-      const existingCustomer = await storage.getCustomer(id);
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
-      
-      // Validate request body
-      const customerData = customerSchema.parse({
-        ...req.body,
-        id,
-        // createdAt: existingCustomer.createdAt,
-        updatedAt: new Date().toISOString()
-      });
-      
-      const updatedCustomer = await storage.updateCustomer(id, customerData);
+      const { customerId } = req.params;
+      const customerData = customerSchema.parse(req.body);
+      const updatedCustomer = await storage.updateCustomer(customerId, customerData);
       res.json(updatedCustomer);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
-      
-      log(`Error updating customer: ${error}`, "routes");
+      log(`Error updating customer: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to update customer" });
     }
   });
@@ -149,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(204).send();
     } catch (error) {
-      log(`Error deleting customer: ${error}`, "routes");
+      log(`Error deleting customer: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to delete customer" });
     }
   });
@@ -165,7 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedCustomer);
     } catch (error) {
-      log(`Error toggling hot lead: ${error}`, "routes");
+      log(`Error toggling hot lead: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to toggle hot lead" });
     }
   });
@@ -181,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedCustomer);
     } catch (error) {
-      log(`Error toggling pinned: ${error}`, "routes");
+      log(`Error toggling pinned: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to toggle pinned" });
     }
   });
@@ -192,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customers = await storage.getCustomersWithUpcomingFollowUps(parseInt(days));
       res.json(customers);
     } catch (error) {
-      log(`Error getting customers with upcoming follow-ups: ${error}`, "routes");
+      log(`Error getting customers with upcoming follow-ups: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to get customers with upcoming follow-ups" });
     }
   });
@@ -202,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customers = await storage.getCustomersNeedingAttention();
       res.json(customers);
     } catch (error) {
-      log(`Error getting customers needing attention: ${error}`, "routes");
+      log(`Error getting customers needing attention: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to get customers needing attention" });
     }
   });
@@ -214,8 +178,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notes = await storage.getNotesForCustomer(customerId);
       res.json(notes);
     } catch (error) {
-      log(`Error getting notes: ${error}`, "routes");
+      log(`Error getting notes: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to get notes" });
+    }
+  });
+  
+  app.post("/api/customers/:customerId/notes", async (req: Request, res: Response) => {
+    try {
+      const { customerId } = req.params;
+      
+      // Generate a new UUID for the note
+      const noteId = uuidv4();
+      
+      // Validate request body
+      const noteData = noteSchema.parse({
+        ...req.body,
+        customerId,
+        id: noteId,
+        timestamp: new Date()
+      });
+      
+      const newNote = await storage.createNote(noteData);
+      res.status(201).json(newNote);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      
+      log(`Error creating note: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
+      res.status(500).json({ error: "Failed to create note" });
     }
   });
   
@@ -230,56 +221,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(note);
     } catch (error) {
-      log(`Error getting note: ${error}`, "routes");
+      log(`Error getting note: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to get note" });
     }
   });
   
-  app.post("/api/notes", async (req: Request, res: Response) => {
+  app.put("/api/customers/:customerId/notes/:noteId", async (req: Request, res: Response) => {
     try {
-      // Generate a new UUID for the note
-      const noteId = uuidv4();
-      
-      // Validate request body
+      const { customerId, noteId } = req.params;
       const noteData = noteSchema.parse({
         ...req.body,
-        id: noteId,
-        timestamp: new Date()
+        customerId,
+        id: noteId
       });
-      
-      const newNote = await storage.createNote(noteData);
-      res.status(201).json(newNote);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      
-      log(`Error creating note: ${error}`, "routes");
-      res.status(500).json({ error: "Failed to create note" });
-    }
-  });
-  
-  app.put("/api/notes/:id", async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      
-      // Check if note exists
-      const existingNote = await storage.getNoteById(id);
-      if (!existingNote) {
-        return res.status(404).json({ error: "Note not found" });
-      }
-      
-      // Validate request body
-      const noteData = noteSchema.parse(req.body);
-      
-      const updatedNote = await storage.updateNote(id, noteData);
+      const updatedNote = await storage.updateNote(noteId, noteData);
       res.json(updatedNote);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
-      
-      log(`Error updating note: ${error}`, "routes");
+      log(`Error updating note: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to update note" });
     }
   });
@@ -295,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(204).send();
     } catch (error) {
-      log(`Error deleting note: ${error}`, "routes");
+      log(`Error deleting note: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to delete note" });
     }
   });
@@ -311,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedNote);
     } catch (error) {
-      log(`Error toggling key note: ${error}`, "routes");
+      log(`Error toggling key note: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to toggle key note" });
     }
   });
@@ -323,31 +284,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailLogs = await storage.getEmailLogsForCustomer(customerId);
       res.json(emailLogs);
     } catch (error) {
-      log(`Error getting email logs: ${error}`, "routes");
+      log(`Error getting email logs: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to get email logs" });
     }
   });
   
-  app.post("/api/email-logs", async (req: Request, res: Response) => {
+  app.post("/api/customers/:customerId/email-logs", async (req: Request, res: Response) => {
     try {
-      // Generate a new UUID for the email log
-      const emailLogId = uuidv4();
-      
-      // Validate request body
+      const { customerId } = req.params;
       const emailLogData = emailLogSchema.parse({
         ...req.body,
-        id: emailLogId,
-        date: new Date()
+        customerId
       });
-      
       const newEmailLog = await storage.createEmailLog(emailLogData);
       res.status(201).json(newEmailLog);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
-      
-      log(`Error creating email log: ${error}`, "routes");
+      log(`Error creating email log: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to create email log" });
     }
   });
@@ -363,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(204).send();
     } catch (error) {
-      log(`Error deleting email log: ${error}`, "routes");
+      log(`Error deleting email log: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to delete email log" });
     }
   });
@@ -375,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activityLogs = await storage.getAllActivityLogs(limit);
       res.json(activityLogs);
     } catch (error) {
-      log(`Error getting activity logs: ${error}`, "routes");
+      log(`Error getting activity logs: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to get activity logs" });
     }
   });
@@ -386,31 +341,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activityLogs = await storage.getActivityLogsForCustomer(customerId);
       res.json(activityLogs);
     } catch (error) {
-      log(`Error getting activity logs: ${error}`, "routes");
+      log(`Error getting activity logs: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to get activity logs" });
     }
   });
   
-  app.post("/api/activity-logs", async (req: Request, res: Response) => {
+  app.post("/api/customers/:customerId/activity-logs", async (req: Request, res: Response) => {
     try {
-      // Generate a new UUID for the activity log
-      const activityLogId = uuidv4();
-      
-      // Validate request body
+      const { customerId } = req.params;
       const activityLogData = activityLogSchema.parse({
         ...req.body,
-        id: activityLogId,
-        timestamp: new Date()
+        customerId
       });
-      
       const newActivityLog = await storage.createActivityLog(activityLogData);
       res.status(201).json(newActivityLog);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
-      
-      log(`Error creating activity log: ${error}`, "routes");
+      log(`Error creating activity log: ${error instanceof Error ? error.message : 'Unknown error'}`, "routes");
       res.status(500).json({ error: "Failed to create activity log" });
     }
   });

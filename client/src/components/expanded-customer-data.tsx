@@ -18,7 +18,7 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
   const { useCustomerNotes } = useCustomers();
   
   // Fetch notes for this customer
-  const { data: notes = [], isLoading: notesLoading } = useCustomerNotes(customer.id);
+  const { data: notes = [], isLoading: notesLoading } = useCustomerNotes(customer._id);
   
   // Filter key notes
   const keyNotes = notes.filter(note => note.isKey);
@@ -73,7 +73,7 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
               ) : notes.length > 0 ? (
                 <div className="space-y-3">
                   {notes.map((note: Note) => (
-                    <NoteItem key={note.id} note={note} customerId={customer.id} />
+                    <NoteItem key={note.id} note={note} customerId={customer._id} />
                   ))}
                 </div>
               ) : (
@@ -102,7 +102,7 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
               ) : keyNotes.length > 0 ? (
                 <div className="space-y-3">
                   {keyNotes.map((note: Note) => (
-                    <NoteItem key={note.id} note={note} customerId={customer.id} />
+                    <NoteItem key={note.id} note={note} customerId={customer._id} />
                   ))}
                 </div>
               ) : (
@@ -256,7 +256,7 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium">Email Log</h3>
                 </div>
-                <EmailLogComponent customerId={customer.id} />
+                <EmailLogComponent customerId={customer._id} />
               </div>
             </TabsContent>
           </Tabs>
@@ -264,7 +264,7 @@ export default function ExpandedCustomerData({ customer }: ExpandedCustomerDataP
       </div>
       
       <AddNoteModal 
-        customerId={customer.id}
+        customerId={customer._id}
         isOpen={addNoteModalOpen}
         onClose={() => setAddNoteModalOpen(false)}
       />

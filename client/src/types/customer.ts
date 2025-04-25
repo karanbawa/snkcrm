@@ -22,7 +22,7 @@ export type ValueTier = "Premium" | "Standard" | "Basic" | "";
 export type DirectImport = "Yes" | "No" | "Distributor" | "";
 
 export interface Customer {
-  id: string;
+  _id: string;
   name: string;
   contactPerson: string;
   email: string;

@@ -31,7 +31,7 @@ export default function CustomerRow({ customer, isExpanded, onToggleExpand, onEd
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const handleDelete = () => {
-    deleteCustomer(customer.id);
+    deleteCustomer(customer._id);
     toast({
       title: 'Customer Deleted',
       description: `${customer.name} has been deleted from your database.`,

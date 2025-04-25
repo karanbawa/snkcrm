@@ -171,7 +171,7 @@ export default function EditCustomerModal({ customer, isOpen, onClose }: EditCus
       isPinned: customer.isPinned,
     };
     
-    updateCustomer(customer.id, updatedCustomer);
+    updateCustomer(customer._id, updatedCustomer);
     
     toast({
       title: "Customer Updated",

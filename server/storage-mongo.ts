@@ -104,27 +104,22 @@ export class MongoStorage implements IStorage {
 
   async updateCustomer(id: string, updateData: Partial<CustomerType>): Promise<CustomerType | null> {
     if (!this.customersCollection) throw new Error('Not connected to database');
+    const mongoId = toMongoId(id);
+    if (!mongoId) return null;
     const result = await this.customersCollection.findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      { _id: mongoId },
       { $set: { ...updateData, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );
     if (!result) return null;
     return this.transformCustomer(result);
-    // return {
-    //   name: result.name,
-    //   email: result.email,
-    //   phone: result.phone || '',
-    //   // address: result.address || '',
-    //   _id: result._id.toString(),
-    //   createdAt: result.createdAt,
-    //   updatedAt: result.updatedAt
-    // };
   }
 
   async deleteCustomer(id: string): Promise<boolean> {
     if (!this.customersCollection) throw new Error('Not connected to database');
-    const result = await this.customersCollection.deleteOne({ _id: new ObjectId(id) });
+    const mongoId = toMongoId(id);
+    if (!mongoId) return false;
+    const result = await this.customersCollection.deleteOne({ _id: mongoId });
     return result.deletedCount > 0;
   }
 
@@ -638,22 +633,23 @@ export class CustomerStorage implements IStorage {
 
   async updateCustomer(id: string, updateData: Partial<CustomerType>): Promise<CustomerType | null> {
     if (!this.customersCollection) throw new Error('Not connected to database');
-    
-    const now = new Date();
+    const mongoId = toMongoId(id);
+    if (!mongoId) return null;
     const result = await this.customersCollection.findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { $set: { ...updateData, updatedAt: now } },
+      { _id: mongoId },
+      { $set: { ...updateData, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );
-    
-    return result ? this.toCustomer(result) : null;
+    if (!result) return null;
+    return this.toCustomer(result);
   }
 
   async deleteCustomer(id: string): Promise<boolean> {
     if (!this.customersCollection) throw new Error('Not connected to database');
-    
-    const result = await this.customersCollection.deleteOne({ _id: new ObjectId(id) });
-    return result.deletedCount === 1;
+    const mongoId = toMongoId(id);
+    if (!mongoId) return false;
+    const result = await this.customersCollection.deleteOne({ _id: mongoId });
+    return result.deletedCount > 0;
   }
 
   // User operations

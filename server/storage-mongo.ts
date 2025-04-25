@@ -49,18 +49,44 @@ export class MongoStorage implements IStorage {
   }
 
   async createCustomer(customerData: Omit<CustomerType, '_id'>): Promise<CustomerType> {
-    if (!this.customersCollection) throw new Error('Not connected to database');
-    const result = await this.customersCollection.insertOne({
-      ...customerData,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-    return {
-      ...customerData,
-      _id: result.insertedId.toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    try {
+      if (!this.customersCollection) {
+        log('Attempting to reconnect to database...', 'mongo-storage');
+        if (this.client) {
+          await this.client.close();
+          this.client = null;
+        }
+        await this.connect(process.env.MONGODB_URI || '');
+        if (!this.customersCollection) {
+          throw new Error('Failed to connect to database');
+        }
+      }
+
+      const now = new Date();
+      const customerDoc = {
+        ...customerData,
+        createdAt: now,
+        updatedAt: now,
+        isHotLead: false,
+        isPinned: false,
+        tags: customerData.tags || [],
+        status: customerData.status || 'Lead',
+        priority: customerData.priority || 'Medium',
+        customerType: customerData.customerType || 'Other',
+        valueTier: customerData.valueTier || 'Standard',
+        directImport: customerData.directImport || 'No'
+      };
+
+      const result = await this.customersCollection.insertOne(customerDoc);
+      
+      return {
+        ...customerDoc,
+        _id: result.insertedId.toString()
+      };
+    } catch (error) {
+      log(`Error in createCustomer: ${error}`, 'mongo-storage');
+      throw error;
+    }
   }
 
   async getCustomers(): Promise<CustomerType[]> {
@@ -458,11 +484,12 @@ export class MongoStorage implements IStorage {
 
   private transformCustomer(customer: any): any {
     return {
-      id: customer._id.toString(),
-      name: customer.name || '',
-      contactPerson: customer.contactPerson || '',
-      email: customer.email || '',
+      _id: customer._id.toString(),
+      name: customer.name,
+      email: customer.email,
       phone: customer.phone || '',
+      address: customer.address || '',
+      contactPerson: customer.contactPerson || '',
       country: customer.country || '',
       region: customer.region || '',
       city: customer.city || '',
@@ -475,14 +502,14 @@ export class MongoStorage implements IStorage {
       tags: customer.tags || [],
       valueTier: customer.valueTier || 'Standard',
       directImport: customer.directImport || 'No',
-      lastFollowUpDate: customer.lastFollowUpDate || '',
-      nextFollowUpDate: customer.nextFollowUpDate || '',
+      lastFollowUpDate: customer.lastFollowUpDate,
+      nextFollowUpDate: customer.nextFollowUpDate,
       lastContactNotes: customer.lastContactNotes || '',
       keyMeetingPoints: customer.keyMeetingPoints || '',
       isHotLead: customer.isHotLead || false,
       isPinned: customer.isPinned || false,
-      createdAt: customer.createdAt,
-      updatedAt: customer.updatedAt
+      createdAt: customer.createdAt || new Date(),
+      updatedAt: customer.updatedAt || new Date()
     };
   }
 

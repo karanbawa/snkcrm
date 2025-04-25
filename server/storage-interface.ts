@@ -2,10 +2,10 @@
 export interface IStorage {
   connect(uri: string): Promise<void>;
   disconnect(): Promise<void>;
-  createCustomer(customerData: Omit<Customer, '_id'>): Promise<Customer>;
+  createCustomer(customer: Omit<Customer, '_id'>): Promise<Customer>;
   getCustomers(): Promise<Customer[]>;
   getCustomerById(id: string): Promise<Customer | null>;
-  updateCustomer(id: string, updateData: Partial<Customer>): Promise<Customer | null>;
+  updateCustomer(id: string, customer: Partial<Customer>): Promise<Customer | null>;
   deleteCustomer(id: string): Promise<boolean>;
   
   // User operations
@@ -41,11 +41,29 @@ export interface IStorage {
 }
 
 export interface Customer {
-  _id?: string;
+  _id: string;
   name: string;
+  contactPerson: string;
   email: string;
   phone?: string;
-  address?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  country: string;
+  region?: string;
+  city: string;
+  website?: string;
+  isReturningCustomer?: boolean;
+  customerType?: 'Retailer' | 'Distributor' | 'Contractor' | 'Designer' | 'Architect' | 'Builder' | 'Other';
+  requirements?: string;
+  status?: 'Lead' | 'Email Sent' | 'Meeting Scheduled' | 'Negotiation' | 'Won' | 'Lost';
+  priority?: 'High' | 'Medium' | 'Low';
+  tags?: string[];
+  valueTier?: 'Premium' | 'Standard' | 'Basic' | '';
+  directImport?: 'Yes' | 'No' | 'Distributor' | '';
+  lastFollowUpDate?: string;
+  nextFollowUpDate?: string;
+  lastContactNotes?: string;
+  keyMeetingPoints?: string;
+  isHotLead?: boolean;
+  isPinned?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 } 

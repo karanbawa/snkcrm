@@ -24,6 +24,8 @@ interface Customer {
   status: 'lead' | 'customer' | 'inactive';
   priority: 'low' | 'medium' | 'high';
   tags: string[];
+  notes?: string[];
+  followUps?: string[];
 }
 
 interface CustomerTableProps {
@@ -91,7 +93,11 @@ export default function CustomerTable({ searchParams, onRefresh }: CustomerTable
   };
 
   const handleEdit = (customer: Customer) => {
-    setEditingCustomer(customer);
+    setEditingCustomer({
+      ...customer,
+      notes: (customer as any).notes ?? [],
+      followUps: (customer as any).followUps ?? [],
+    });
   };
 
   const handleEditComplete = () => {
@@ -177,7 +183,21 @@ export default function CustomerTable({ searchParams, onRefresh }: CustomerTable
       {/* Edit Customer Modal */}
       {editingCustomer && (
         <EditCustomerModal
-          customer={editingCustomer}
+          customer={{
+            ...editingCustomer,
+            notes: Array.isArray(editingCustomer.notes)
+              ? (editingCustomer.notes as any[]).map(note =>
+                  typeof note === 'string' ? { content: note } : note
+                )
+              : [],
+            followUps: Array.isArray(editingCustomer.followUps)
+              ? (editingCustomer.followUps as any[]).map(fu =>
+                  typeof fu === 'string'
+                    ? { date: '', notes: fu, status: 'pending' }
+                    : fu
+                )
+              : [],
+          }}
           onClose={handleEditComplete}
         />
       )}
